@@ -45,7 +45,14 @@ export default function LandingPage() {
     isLoading,
     isError,
     error,
-  } = useFetchProductsQuery({ page: currentPage, limit: pageSize }, { skip: false });
+    isFetching,
+  } = useFetchProductsQuery(
+    { page: currentPage, limit: pageSize },
+    {
+      skip: false,
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
   const products = productsData?.data ?? [];
   const pagination = productsData?.pagination;
@@ -56,6 +63,7 @@ export default function LandingPage() {
     once: true,
     margin: "0px 0px -120px 0px",
   });
+
 
   const scrollToProducts = () => {
     productsSectionRef.current?.scrollIntoView({
@@ -153,7 +161,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <p className="text-sm text-black/60">Cargando productos...</p>
         ) : isError ? (
           <p className="text-sm text-black/60">
@@ -168,7 +176,7 @@ export default function LandingPage() {
               className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4"
               variants={gridVariants}
               initial="hidden"
-              animate={gridInView ? "show" : "hidden"}
+              animate="show"
               key={currentPage}
             >
               {products.map((product: Product) => (

@@ -17,11 +17,18 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(Math.max(1, limit), 100); // Max 100 items per page
     const skip = (currentPage - 1) * pageSize;
 
-    // Get total count for pagination metadata
-    const total = await prisma.products.count();
+    // Get total count for pagination metadata (only active products)
+    const total = await prisma.products.count({
+      where: {
+        isActive: true,
+      },
+    });
     
-    // Fetch paginated products with category
+    // Fetch paginated products with category (only active products)
     const products = await prisma.products.findMany({
+      where: {
+        isActive: true,
+      },
       include: {
         category: true,
       },

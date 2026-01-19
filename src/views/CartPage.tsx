@@ -47,13 +47,15 @@ export function CartPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setShowClearModal(true)}
-              type="button"
-              className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-black/60 transition hover:bg-black/5"
-            >
-              Vaciar
-            </button>
+            {cart.length > 0 && (
+              <button
+                onClick={() => setShowClearModal(true)}
+                type="button"
+                className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-black/60 transition hover:bg-black/5"
+              >
+                Vaciar
+              </button>
+            )}
             <Link
               href="/"
               className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:translate-y-[-1px]"
