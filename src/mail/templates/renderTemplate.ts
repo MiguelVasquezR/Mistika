@@ -1,0 +1,176 @@
+/**
+ * Template renderer
+ * Replaces variables in templates
+ */
+
+import { readFileSync } from "fs";
+import { join } from "path";
+import type { MailPayload } from "../types";
+
+/**
+ * Read template file from disk
+ */
+function readTemplate(filename: string): string {
+  try {
+    const templatePath = join(process.cwd(), "src", "mail", "templates", filename);
+    return readFileSync(templatePath, "utf-8");
+  } catch (error) {
+    console.error(`[Mail] Error reading template ${filename}:`, error);
+    throw new Error(`Template file not found: ${filename}`);
+  }
+}
+
+/**
+ * Get template content (cached in memory)
+ */
+const templates: Record<string, { html: string; txt: string }> = {
+  welcome: {
+    html: readTemplate("welcome.html"),
+    txt: readTemplate("welcome.txt"),
+  },
+  "verify-email": {
+    html: readTemplate("verify-email.html"),
+    txt: readTemplate("verify-email.txt"),
+  },
+  "reset-password": {
+    html: readTemplate("reset-password.html"),
+    txt: readTemplate("reset-password.txt"),
+  },
+  "order-confirmation": {
+    html: readTemplate("order-confirmation.html"),
+    txt: readTemplate("order-confirmation.txt"),
+  },
+  generic: {
+    html: readTemplate("generic.html"),
+    txt: readTemplate("generic.txt"),
+  },
+};
+
+/**
+ * Format price for display
+ */
+function formatPrice(price: number | string): string {
+  const numPrice = typeof price === "string" ? parseFloat(price) : price;
+  if (isNaN(numPrice)) return "$0.00";
+  return `$${numPrice.toFixed(2)} MXN`;
+}
+
+/**
+ * Replace variables in template
+ */
+function replaceVariables(template: string, payload: MailPayload): string {
+  let result = template;
+
+  // Replace common variables
+  if ("name" in payload && payload.name) {
+    result = result.replace(/\{\{name\}\}/g, payload.name);
+  }
+
+  if ("verifyUrl" in payload && payload.verifyUrl) {
+    result = result.replace(/\{\{verifyUrl\}\}/g, payload.verifyUrl);
+  }
+
+  if ("resetUrl" in payload && payload.resetUrl) {
+    result = result.replace(/\{\{resetUrl\}\}/g, payload.resetUrl);
+  }
+
+  if ("message" in payload && payload.message) {
+    // For generic emails, replace message (may contain HTML or plain text)
+    result = result.replace(/\{\{message\}\}/g, payload.message);
+  }
+
+  // Replace order confirmation variables
+  if ("orderNumber" in payload && payload.orderNumber) {
+    result = result.replace(/\{\{orderNumber\}\}/g, payload.orderNumber);
+  }
+
+  if ("orderDate" in payload && payload.orderDate) {
+    result = result.replace(/\{\{orderDate\}\}/g, payload.orderDate);
+  }
+
+  if ("totalAmount" in payload && payload.totalAmount !== undefined) {
+    const formattedTotal = formatPrice(payload.totalAmount);
+    result = result.replace(/\{\{totalAmount\}\}/g, formattedTotal);
+  }
+
+  if ("items" in payload && Array.isArray(payload.items)) {
+    // Check if this is HTML or TXT template
+    const isHtml = template.includes("<html") || template.includes("<table");
+    
+    if (isHtml) {
+      // Generate items HTML table rows
+      const itemsHtml = payload.items
+        .map(
+          (item: any) => `
+      <tr style="border-bottom: 1px solid #eeeeee;">
+        <td style="padding: 12px 0; font-size: 14px; color: #333333;">
+          ${item.name} × ${item.quantity}
+        </td>
+        <td style="padding: 12px 0; text-align: right; font-size: 14px; font-weight: 600; color: #000000;">
+          ${formatPrice(item.price * item.quantity)}
+        </td>
+      </tr>
+    `
+        )
+        .join("");
+      result = result.replace(/\{\{items\}\}/g, itemsHtml);
+    } else {
+      // Generate items text format
+      const itemsTxt = payload.items
+        .map(
+          (item: any) =>
+            `- ${item.name} × ${item.quantity} - ${formatPrice(item.price * item.quantity)}`
+        )
+        .join("\n");
+      result = result.replace(/\{\{items\}\}/g, itemsTxt);
+    }
+  }
+
+  if ("shippingAddress" in payload && payload.shippingAddress) {
+    result = result.replace(/\{\{shippingAddress\}\}/g, payload.shippingAddress);
+  }
+
+  if ("orderUrl" in payload && payload.orderUrl) {
+    const isHtml = template.includes("<html") || template.includes("<table");
+    if (isHtml) {
+      const orderUrlHtml = `
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${payload.orderUrl}" style="display: inline-block; padding: 14px 32px; background-color: #000000; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em;">
+                  Ver detalles del pedido
+                </a>
+              </div>
+            `;
+      result = result.replace(/\{\{orderUrl\}\}/g, orderUrlHtml);
+    } else {
+      const orderUrlTxt = `\n\nVer detalles del pedido: ${payload.orderUrl}\n`;
+      result = result.replace(/\{\{orderUrl\}\}/g, orderUrlTxt);
+    }
+  } else {
+    // Remove orderUrl placeholder if not provided
+    result = result.replace(/\{\{orderUrl\}\}/g, "");
+  }
+
+  // Clean up any remaining unused variables
+  result = result.replace(/\{\{[^}]+\}\}/g, "");
+
+  return result;
+}
+
+/**
+ * Render template by name
+ */
+export async function renderTemplate(
+  templateName: string,
+  payload: MailPayload
+): Promise<{ html: string; txt: string }> {
+  const template = templates[templateName];
+
+  if (!template) {
+    throw new Error(`Template "${templateName}" not found`);
+  }
+
+  return {
+    html: replaceVariables(template.html, payload),
+    txt: replaceVariables(template.txt, payload),
+  };
+}

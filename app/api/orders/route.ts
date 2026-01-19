@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../lib/prisma";
+import { sendMail } from "@/mail/sendMail";
 
 /**
  * GET /api/orders
@@ -155,6 +156,60 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Send order confirmation email (don't fail the request if email fails)
+    try {
+      const formatPrice = (price: number | string) => {
+        const numPrice = typeof price === "string" ? parseFloat(price) : price;
+        if (isNaN(numPrice)) return "$0.00 MXN";
+        return `$${numPrice.toFixed(2)} MXN`;
+      };
+
+      const formatDate = (date: Date | string) => {
+        return new Date(date).toLocaleDateString("es-MX", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      };
+
+      // Build shipping address string
+      const shippingAddress = [
+        order.shippingStreet,
+        `${order.shippingCity}, ${order.shippingState} ${order.shippingZip}`,
+        order.shippingCountry,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      // Build order URL
+      const orderUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/orders/${order.orderNumber}`;
+
+      await sendMail({
+        type: "order-confirmation",
+        to: order.customerEmail,
+        payload: {
+          name: order.customerName,
+          orderNumber: order.orderNumber,
+          orderDate: formatDate(order.createdAt),
+          totalAmount: Number(order.totalAmount),
+          items: order.items.map((item: any) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: Number(item.unitPrice),
+          })),
+          shippingAddress,
+          orderUrl,
+        },
+      });
+
+      console.log(`[Orders] Order confirmation email sent to ${order.customerEmail}`);
+    } catch (emailError) {
+      // Log error but don't fail the request
+      console.error("[Orders] Failed to send order confirmation email:", emailError);
+    }
 
     return NextResponse.json({
       success: true,
