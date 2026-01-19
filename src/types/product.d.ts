@@ -12,9 +12,12 @@ declare global {
     name: string;
     description: string | null;
     price: number | null; // Decimal from DB converted to number
+    discountPrice: number | null; // Decimal from DB converted to number
+    isOnSale: boolean;
     imageUrl: string | null;
     slug: string | null;
-    category: string;
+    categoryId: number;
+    category?: Category | string; // Can be full category object or just name string
     stock: number;
     isActive: boolean;
     createdAt: Date;
@@ -28,9 +31,12 @@ declare global {
     name: string;
     description?: string | null;
     price?: number | null;
+    discountPrice?: number | null;
+    isOnSale?: boolean;
     imageUrl?: string | null;
     slug?: string | null;
-    category?: string;
+    categoryId?: number;
+    category?: string; // Legacy support - will be converted to categoryId
     stock?: number;
     isActive?: boolean;
   };

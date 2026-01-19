@@ -47,28 +47,32 @@ export const productsApi = apiSlice.injectEndpoints({
     // Create product (mutation)
     createProduct: build.mutation({
       query: (formData: ProductInput) => ({
-        url: "",
+        url: "/products",
         method: "POST",
-        body: { product: formData },
-        headers: {
-          endpoint: "products",
-          method: "POST",
-        },
+        body: formData,
       }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { success: true, data: response.data };
+        }
+        return response;
+      },
       invalidatesTags: ["Products"],
     }),
 
     // Update product (mutation)
     updateProduct: build.mutation({
       query: ({ id, ...formData }: { id: number } & Partial<ProductInput>) => ({
-        url: "",
+        url: `/products/${id}`,
         method: "PUT",
-        body: { product: formData },
-        headers: {
-          endpoint: `products/${id}`,
-          method: "PUT",
-        },
+        body: formData,
       }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { success: true, data: response.data };
+        }
+        return response;
+      },
       invalidatesTags: (result, error, { id }) => [
         { type: "Products", id },
         "Products",
@@ -78,13 +82,15 @@ export const productsApi = apiSlice.injectEndpoints({
     // Delete product (mutation)
     deleteProduct: build.mutation({
       query: (id: number) => ({
-        url: "",
+        url: `/products/${id}`,
         method: "DELETE",
-        headers: {
-          endpoint: `products/${id}`,
-          method: "DELETE",
-        },
       }),
+      transformResponse: (response: any) => {
+        if (response.success) {
+          return { success: true };
+        }
+        return response;
+      },
       invalidatesTags: ["Products"],
     }),
   }),

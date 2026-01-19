@@ -1,0 +1,165 @@
+/**
+ * Order types
+ * Available globally without import
+ */
+
+declare global {
+  /**
+   * Order status
+   */
+  type OrderStatus =
+    | "pending"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
+
+  /**
+   * Payment status
+   */
+  type PaymentStatus =
+    | "pending"
+    | "paid"
+    | "failed"
+    | "refunded";
+
+  /**
+   * Payment method
+   */
+  type PaymentMethod =
+    | "card"
+    | "cash"
+    | "transfer"
+    | "other";
+
+  /**
+   * Shipping method
+   */
+  type ShippingMethod =
+    | "standard"
+    | "express"
+    | "overnight";
+
+  /**
+   * Address for shipping/billing
+   */
+  type Address = {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country?: string;
+  };
+
+  /**
+   * Order item (product in order)
+   */
+  type OrderItem = {
+    id: number;
+    orderId: number;
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    productName: string;
+    createdAt: Date;
+  };
+
+  /**
+   * Order model from database
+   */
+  type Order = {
+    id: number;
+    orderNumber: string;
+    status: OrderStatus;
+    totalAmount: number;
+    subtotal: number;
+    shippingCost: number;
+    tax: number;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string | null;
+    shippingStreet: string;
+    shippingCity: string;
+    shippingState: string;
+    shippingZip: string;
+    shippingCountry: string;
+    billingStreet: string | null;
+    billingCity: string | null;
+    billingState: string | null;
+    billingZip: string | null;
+    billingCountry: string | null;
+    shippingMethod: ShippingMethod;
+    paymentMethod: PaymentMethod | null;
+    paymentStatus: PaymentStatus;
+    notes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    items?: OrderItem[];
+  };
+
+  /**
+   * Order input for creating order
+   */
+  type OrderInput = {
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    shippingAddress: Address;
+    billingAddress?: Address;
+    shippingMethod?: ShippingMethod;
+    paymentMethod?: PaymentMethod;
+    notes?: string;
+    items: {
+      productId: number;
+      quantity: number;
+      unitPrice: number;
+    }[];
+  };
+
+  /**
+   * Order update input
+   */
+  type OrderUpdateInput = {
+    status?: OrderStatus;
+    paymentStatus?: PaymentStatus;
+    shippingMethod?: ShippingMethod;
+    notes?: string;
+  };
+
+  /**
+   * Checkout form data
+   */
+  type CheckoutFormData = {
+    // Customer info
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    
+    // Shipping address
+    shippingStreet: string;
+    shippingCity: string;
+    shippingState: string;
+    shippingZip: string;
+    shippingCountry: string;
+    
+    // Billing address (optional)
+    useBillingAddress: boolean;
+    billingStreet?: string;
+    billingCity?: string;
+    billingState?: string;
+    billingZip?: string;
+    billingCountry?: string;
+    
+    // Shipping method
+    shippingMethod: ShippingMethod;
+    
+    // Payment method
+    paymentMethod: PaymentMethod;
+    
+    // Notes
+    notes?: string;
+  };
+}
+
+export {};

@@ -1,0 +1,125 @@
+import { apiSlice } from "../api/apiSlice";
+
+export const ordersApi = apiSlice.injectEndpoints({
+  endpoints: (build) => ({
+    // Fetch all orders with pagination
+    fetchOrders: build.query({
+      query: ({ page = 1, limit = 20, status }: { page?: number; limit?: number; status?: OrderStatus } = {}) => {
+        const params = new URLSearchParams();
+        params.append("page", page.toString());
+        params.append("limit", limit.toString());
+        if (status) params.append("status", status);
+        return `/orders?${params.toString()}`;
+      },
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return {
+            data: response.data,
+            pagination: response.pagination || null,
+          };
+        }
+        if (Array.isArray(response)) {
+          return { data: response, pagination: null };
+        }
+        if (response.data) {
+          return {
+            data: Array.isArray(response.data) ? response.data : [],
+            pagination: response.pagination || null,
+          };
+        }
+        return { data: [], pagination: null };
+      },
+      providesTags: ["Orders"],
+    }),
+
+    // Fetch single order by ID
+    fetchOrder: build.query({
+      query: (id: string) => `/orders/${id}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { data: response.data };
+        }
+        if (response.data) {
+          return { data: response.data };
+        }
+        return { data: response };
+      },
+      providesTags: (result, error, id) => [{ type: "Orders", id }],
+    }),
+
+    // Fetch order by order number
+    fetchOrderByNumber: build.query({
+      query: (orderNumber: string) => `/orders/number/${orderNumber}`,
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { data: response.data };
+        }
+        if (response.data) {
+          return { data: response.data };
+        }
+        return { data: response };
+      },
+      providesTags: (result, error, orderNumber) => [{ type: "Orders", id: orderNumber }],
+    }),
+
+    // Create order (mutation)
+    createOrder: build.mutation({
+      query: (orderData: OrderInput) => ({
+        url: "/orders",
+        method: "POST",
+        body: orderData,
+      }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { success: true, data: response.data };
+        }
+        return response;
+      },
+      invalidatesTags: ["Orders"],
+    }),
+
+    // Update order (mutation)
+    updateOrder: build.mutation({
+      query: ({ id, ...updateData }: { id: number } & OrderUpdateInput) => ({
+        url: `/orders/${id}`,
+        method: "PUT",
+        body: updateData,
+      }),
+      transformResponse: (response: any) => {
+        if (response.success && response.data) {
+          return { success: true, data: response.data };
+        }
+        return response;
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Orders", id },
+        "Orders",
+      ],
+    }),
+
+    // Delete order (mutation)
+    deleteOrder: build.mutation({
+      query: (id: number) => ({
+        url: `/orders/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: any) => {
+        if (response.success) {
+          return { success: true };
+        }
+        return response;
+      },
+      invalidatesTags: ["Orders"],
+    }),
+  }),
+});
+
+// Export hooks for usage in components
+export const {
+  useFetchOrdersQuery,
+  useFetchOrderQuery,
+  useFetchOrderByNumberQuery,
+  useCreateOrderMutation,
+  useUpdateOrderMutation,
+  useDeleteOrderMutation,
+} = ordersApi;

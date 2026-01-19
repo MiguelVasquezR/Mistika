@@ -25,6 +25,9 @@ export async function GET(
 
     const product = await prisma.products.findUnique({
       where: { id },
+      include: {
+        category: true,
+      },
     });
 
     if (!product) {
@@ -77,19 +80,40 @@ export async function PUT(
 
     const body = await request.json();
 
+    // Handle category - can be categoryId or category name (legacy)
+    let categoryId = body.categoryId;
+    if (!categoryId && body.category) {
+      // Try to find category by name (legacy support)
+      const category = await prisma.categories.findFirst({
+        where: { name: body.category },
+      });
+      if (category) {
+        categoryId = category.id;
+      }
+    }
+
+    const updateData: any = {
+      ...(body.name && { name: body.name }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.price !== undefined && {
+        price: body.price ? parseFloat(body.price) : null,
+      }),
+      ...(body.discountPrice !== undefined && {
+        discountPrice: body.discountPrice ? parseFloat(body.discountPrice) : null,
+      }),
+      ...(body.isOnSale !== undefined && { isOnSale: body.isOnSale }),
+      ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
+      ...(body.slug !== undefined && { slug: body.slug }),
+      ...(categoryId !== undefined && { categoryId }),
+      ...(body.stock !== undefined && { stock: body.stock }),
+      ...(body.isActive !== undefined && { isActive: body.isActive }),
+    };
+
     const product = await prisma.products.update({
       where: { id },
-      data: {
-        ...(body.name && { name: body.name }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.price !== undefined && {
-          price: body.price ? parseFloat(body.price) : null,
-        }),
-        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
-        ...(body.slug !== undefined && { slug: body.slug }),
-        ...(body.category && { category: body.category }),
-        ...(body.stock !== undefined && { stock: body.stock }),
-        ...(body.isActive !== undefined && { isActive: body.isActive }),
+      data: updateData,
+      include: {
+        category: true,
       },
     });
 

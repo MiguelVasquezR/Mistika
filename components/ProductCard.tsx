@@ -9,7 +9,13 @@ type Props = {
 };
 
 export default function ProductCard({ product }: Props) {
-  const priceLabel = product.price?.toString() ?? "—";
+  const displayPrice = product.isOnSale && product.discountPrice
+    ? product.discountPrice
+    : product.price;
+  const priceLabel = displayPrice?.toString() ?? "—";
+  const originalPrice = product.isOnSale && product.discountPrice && product.price
+    ? product.price
+    : null;
   const imageUrl = product.imageUrl || ""
 
   return (
@@ -31,7 +37,7 @@ export default function ProductCard({ product }: Props) {
           <AddToCartIconButton
             id={product.id}
             name={product.name}
-            price={product.price?.toString() ?? "0"}
+            price={displayPrice?.toString() ?? "0"}
             imageUrl={product.imageUrl ?? null}
           />
         </div>
@@ -42,7 +48,23 @@ export default function ProductCard({ product }: Props) {
           <h3 className="text-lg font-semibold leading-snug line-clamp-2 transition-colors group-hover/link:text-black/80">
             {product.name}
           </h3>
-          <p className="mt-1 text-sm text-black/60">${priceLabel} MXN</p>
+          <div className="mt-1 flex items-center gap-2">
+            {product.isOnSale && originalPrice ? (
+              <>
+                <span className="text-sm font-semibold text-red-600">
+                  ${priceLabel} MXN
+                </span>
+                <span className="text-xs text-black/50 line-through">
+                  ${originalPrice} MXN
+                </span>
+                <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-red-700">
+                  Oferta
+                </span>
+              </>
+            ) : (
+              <p className="text-sm text-black/60">${priceLabel} MXN</p>
+            )}
+          </div>
         </Link>
 
         <Link

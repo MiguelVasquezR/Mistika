@@ -20,8 +20,11 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination metadata
     const total = await prisma.products.count();
     
-    // Fetch paginated products
+    // Fetch paginated products with category
     const products = await prisma.products.findMany({
+      include: {
+        category: true,
+      },
       orderBy: { id: "desc" },
       skip,
       take: pageSize,
@@ -61,16 +64,49 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Handle category - can be categoryId or category name (legacy)
+    let categoryId = body.categoryId;
+    if (!categoryId && body.category) {
+      // Try to find category by name (legacy support)
+      const category = await prisma.categories.findFirst({
+        where: { name: body.category },
+      });
+      if (category) {
+        categoryId = category.id;
+      } else {
+        // Create default category or use General
+        const defaultCategory = await prisma.categories.findFirst({
+          where: { name: "General" },
+        });
+        categoryId = defaultCategory?.id || 1; // Fallback to ID 1 if exists
+      }
+    }
+
+    if (!categoryId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Category ID is required",
+        },
+        { status: 400 }
+      );
+    }
+
     const product = await prisma.products.create({
       data: {
         name: body.name,
         description: body.description,
         price: body.price ? parseFloat(body.price) : null,
+        discountPrice: body.discountPrice ? parseFloat(body.discountPrice) : null,
+        isOnSale: body.isOnSale !== undefined ? body.isOnSale : false,
         imageUrl: body.imageUrl,
         slug: body.slug,
-        category: body.category || "General",
+        categoryId,
         stock: body.stock || 0,
         isActive: body.isActive !== undefined ? body.isActive : true,
+      },
+      include: {
+        category: true,
       },
     });
 

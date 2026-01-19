@@ -6,18 +6,100 @@ datasource db {
   provider = "mysql"
 }
 
-model products {
+model categories {
   id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(255)
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
   description String?  @db.Text
-  price       Decimal? @db.Decimal(10, 2)
-  imageUrl    String?  @db.VarChar(255)
-  slug        String?  @db.VarChar(255)
-  category    String   @default("General") @db.VarChar(50)
-  stock       Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now()) @db.DateTime(0)
   updatedAt   DateTime @default(now()) @db.DateTime(0)
 
+  products    products[]
+
+  @@map("categories")
+}
+
+model products {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  price         Decimal? @db.Decimal(10, 2)
+  discountPrice Decimal? @db.Decimal(10, 2)
+  isOnSale      Boolean  @default(false)
+  imageUrl      String?  @db.VarChar(255)
+  slug          String?  @db.VarChar(255)
+  categoryId    Int
+  stock         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now()) @db.DateTime(0)
+  updatedAt     DateTime @default(now()) @db.DateTime(0)
+
+  category      categories @relation(fields: [categoryId], references: [id])
+  orderItems    order_items[]
+
   @@map("products")
+}
+
+model orders {
+  id              Int      @id @default(autoincrement())
+  orderNumber     String   @unique @db.VarChar(50)
+  status          String   @default("pending") @db.VarChar(50) // pending, processing, shipped, delivered, cancelled
+  totalAmount     Decimal  @db.Decimal(10, 2)
+  subtotal        Decimal  @db.Decimal(10, 2)
+  shippingCost    Decimal  @db.Decimal(10, 2)
+  tax             Decimal  @default(0.00) @db.Decimal(10, 2)
+  
+  // Customer information
+  customerName    String   @db.VarChar(255)
+  customerEmail   String   @db.VarChar(255)
+  customerPhone   String?  @db.VarChar(50)
+  
+  // Shipping address
+  shippingStreet  String   @db.VarChar(255)
+  shippingCity    String   @db.VarChar(100)
+  shippingState   String   @db.VarChar(100)
+  shippingZip     String   @db.VarChar(20)
+  shippingCountry String   @default("México") @db.VarChar(100)
+  
+  // Billing address (optional, can be same as shipping)
+  billingStreet   String?  @db.VarChar(255)
+  billingCity     String?  @db.VarChar(100)
+  billingState    String?  @db.VarChar(100)
+  billingZip      String?  @db.VarChar(20)
+  billingCountry  String?  @db.VarChar(100)
+  
+  // Shipping method
+  shippingMethod  String   @default("standard") @db.VarChar(50) // standard, express, overnight
+  
+  // Payment information
+  paymentMethod   String?  @db.VarChar(50) // card, cash, transfer
+  paymentStatus   String   @default("pending") @db.VarChar(50) // pending, paid, failed, refunded
+  
+  // Notes
+  notes           String?  @db.Text
+  
+  createdAt       DateTime @default(now()) @db.DateTime(0)
+  updatedAt       DateTime @default(now()) @db.DateTime(0)
+
+  items           order_items[]
+
+  @@map("orders")
+}
+
+model order_items {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  productName String   @db.VarChar(255)
+  
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+
+  order       orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     products @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
 }

@@ -13,6 +13,8 @@ export const apiSlice = createApi({
   baseQuery,
   tagTypes: [
     "Products",
+    "Orders",
+    "Categories",
     "Cart",
     // Add more tag types as needed
   ],

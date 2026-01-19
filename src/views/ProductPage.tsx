@@ -200,13 +200,34 @@ export function ProductPage() {
             </h1>
 
             {/* Price */}
-            <div className="mb-6 flex items-baseline gap-3">
-              <p className="text-3xl font-semibold tracking-[0.05em] sm:text-4xl">
-                ${product.price?.toString() ?? "—"}
-              </p>
-              <span className="text-sm uppercase tracking-[0.3em] text-black/50">
-                MXN
-              </span>
+            <div className="mb-6 flex flex-col gap-2">
+              {product.isOnSale && product.discountPrice && product.price ? (
+                <div className="flex items-baseline gap-3">
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-semibold tracking-[0.05em] text-red-600 sm:text-4xl">
+                      ${product.discountPrice.toString()}
+                    </p>
+                    <span className="text-sm uppercase tracking-[0.3em] text-black/50">
+                      MXN
+                    </span>
+                  </div>
+                  <span className="text-lg text-black/50 line-through">
+                    ${product.price.toString()}
+                  </span>
+                  <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                    En oferta
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-3">
+                  <p className="text-3xl font-semibold tracking-[0.05em] sm:text-4xl">
+                    ${product.price?.toString() ?? "—"}
+                  </p>
+                  <span className="text-sm uppercase tracking-[0.3em] text-black/50">
+                    MXN
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Stock status */}

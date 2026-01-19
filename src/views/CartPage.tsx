@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, ArrowLeft, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Minus, Plus, ShoppingBag, Trash2, X, CreditCard } from "lucide-react";
 import { useCart } from "@/context/cart-context";
+import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 
 export function CartPage() {
   const {
@@ -17,11 +18,16 @@ export function CartPage() {
   } = useCart();
 
   const [showClearModal, setShowClearModal] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const handleClearCart = () => {
     clearCart();
     setShowClearModal(false);
   };
+
+  const shippingCost = 150; // Standard shipping
+  const tax = totalPrice * 0.16; // 16% IVA
+  const finalTotal = totalPrice + shippingCost + tax;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 text-black">
@@ -186,20 +192,80 @@ export function CartPage() {
                 <span className="font-semibold">${totalPrice.toFixed(2)} MXN</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-black/60">Envío</span>
-                <span className="font-semibold">Calculado al pagar</span>
+                <span className="text-black/60">Envío (Estándar)</span>
+                <span className="font-semibold">${shippingCost.toFixed(2)} MXN</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-black/60">IVA (16%)</span>
+                <span className="font-semibold">${tax.toFixed(2)} MXN</span>
+              </div>
+              <div className="border-t border-black/10 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold uppercase tracking-[0.1em]">Total</span>
+                  <span className="text-xl font-bold">${finalTotal.toFixed(2)} MXN</span>
+                </div>
               </div>
             </div>
 
             <button
               type="button"
-              className="mt-6 w-full rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:translate-y-[-1px]"
+              onClick={() => setShowCheckout(true)}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:translate-y-[-1px]"
             >
-              Ir a pagar
+              <CreditCard size={16} aria-hidden="true" />
+              Proceder al pago
             </button>
           </aside>
         </div>
       )}
+
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {showCheckout && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowCheckout(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.2)] sm:p-8"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <div className="mb-2">
+                    <p className="text-xs uppercase tracking-[0.4em] text-black/50">
+                      Finalizar compra
+                    </p>
+                  </div>
+                  <h2 className="text-2xl font-semibold tracking-[0.05em] sm:text-3xl">
+                    Completar pedido
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowCheckout(false)}
+                  className="grid h-8 w-8 place-items-center rounded-full border border-black/10 bg-black/5 text-black/60 transition hover:bg-black/10"
+                  aria-label="Cerrar"
+                >
+                  <X size={16} aria-hidden="true" />
+                </button>
+              </div>
+
+              <CheckoutForm totalPrice={totalPrice} onClose={() => setShowCheckout(false)} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Clear cart confirmation modal */}
       <AnimatePresence>
