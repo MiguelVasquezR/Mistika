@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { ArrowDown, ShoppingBag } from "lucide-react";
+import { ArrowDown, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import ProductCarousel from "@/components/shop/ProductCarousel";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
@@ -37,13 +37,18 @@ const cardVariants = {
 
 export default function HomePage() {
   const { totalQuantity } = useCart();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
   const {
     data: productsData,
     isLoading,
     isError,
     error,
-  } = useFetchProductsQuery(undefined, { skip: false });
+  } = useFetchProductsQuery({ page: currentPage, limit: pageSize }, { skip: false });
+
   const products = productsData?.data ?? [];
+  const pagination = productsData?.pagination;
   const errorMessage = getApiErrorMessage(error);
   const productsSectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -52,16 +57,16 @@ export default function HomePage() {
     margin: "0px 0px -120px 0px",
   });
 
-  // Debug logging
-  if (typeof window !== "undefined") {
-    console.log("Products data:", { productsData, products, isLoading, isError, error });
-  }
-
   const scrollToProducts = () => {
     productsSectionRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    scrollToProducts();
   };
 
   return (
@@ -157,19 +162,89 @@ export default function HomePage() {
         ) : products.length === 0 ? (
           <p className="text-sm text-black/60">No hay productos disponibles.</p>
         ) : (
-          <motion.div
-            ref={gridRef}
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
-            variants={gridVariants}
-            initial="hidden"
-            animate={gridInView ? "show" : "show"}
-          >
-            {products.map((product: Product) => (
-              <motion.div key={product.id} variants={cardVariants}>
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              ref={gridRef}
+              className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
+              variants={gridVariants}
+              initial="hidden"
+              animate={gridInView ? "show" : "show"}
+              key={currentPage}
+            >
+              {products.map((product: Product) => (
+                <motion.div key={product.id} variants={cardVariants}>
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Pagination controls */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+                <p className="text-sm text-black/60">
+                  Mostrando {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, pagination.total)} de {pagination.total} productos
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!pagination.hasPreviousPage || isLoading}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft size={18} aria-hidden="true" />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const shouldShow =
+                        page === 1 ||
+                        page === pagination.totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1);
+
+                      if (!shouldShow) {
+                        // Show ellipsis
+                        if (page === currentPage - 2 || page === currentPage + 2) {
+                          return (
+                            <span key={page} className="px-2 text-sm text-black/40">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          disabled={isLoading}
+                          className={`h-10 w-10 rounded-full border text-sm font-medium transition ${page === currentPage
+                              ? "border-black bg-black text-white"
+                              : "border-black/10 bg-white text-black hover:bg-black/5"
+                            } disabled:cursor-not-allowed disabled:opacity-50`}
+                          aria-label={`Ir a página ${page}`}
+                          aria-current={page === currentPage ? "page" : undefined}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pagination.hasNextPage || isLoading}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+                    aria-label="Página siguiente"
+                  >
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>

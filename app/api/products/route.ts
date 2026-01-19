@@ -3,17 +3,43 @@ import { prisma } from "../lib/prisma";
 
 /**
  * GET /api/products
- * Fetch all products
+ * Fetch products with pagination
+ * Query params: page (default: 1), limit (default: 12)
  */
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "12", 10);
+    
+    // Validate pagination parameters
+    const currentPage = Math.max(1, page);
+    const pageSize = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+    const skip = (currentPage - 1) * pageSize;
+
+    // Get total count for pagination metadata
+    const total = await prisma.products.count();
+    
+    // Fetch paginated products
     const products = await prisma.products.findMany({
       orderBy: { id: "desc" },
+      skip,
+      take: pageSize,
     });
+
+    const totalPages = Math.ceil(total / pageSize);
 
     return NextResponse.json({
       success: true,
       data: products,
+      pagination: {
+        currentPage,
+        pageSize,
+        total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching products:", error);

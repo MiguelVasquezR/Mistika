@@ -2,21 +2,28 @@ import { apiSlice } from "../api/apiSlice";
 
 export const productsApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
-    // Fetch all products
+    // Fetch products with pagination
     fetchProducts: build.query({
-      query: () => "/products",
+      query: ({ page = 1, limit = 12 }: { page?: number; limit?: number } = {}) => 
+        `/products?page=${page}&limit=${limit}`,
       transformResponse: (response: any) => {
         // Handle the response structure from Next.js API route
         if (response.success && response.data) {
-          return { data: response.data };
+          return {
+            data: response.data,
+            pagination: response.pagination || null,
+          };
         }
         if (Array.isArray(response)) {
-          return { data: response };
+          return { data: response, pagination: null };
         }
         if (response.data) {
-          return { data: Array.isArray(response.data) ? response.data : [] };
+          return {
+            data: Array.isArray(response.data) ? response.data : [],
+            pagination: response.pagination || null,
+          };
         }
-        return { data: [] };
+        return { data: [], pagination: null };
       },
       providesTags: ["Products"],
     }),
