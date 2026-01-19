@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/cart-context";
-import { useToast } from "@/components/common/toast";
+import { useToast } from "@/hooks/useToast";
 
 type Props = {
   id: number;
