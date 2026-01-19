@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 
 export function CartPage() {
@@ -14,76 +15,180 @@ export function CartPage() {
   } = useCart();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Carrito</h1>
-          <p className="mt-2 text-neutral-600">{totalQuantity} artículos</p>
-        </div>
+    <main className="mx-auto max-w-6xl px-4 py-10 text-black">
+      <header className="relative overflow-hidden rounded-[28px] border border-black/10 bg-white px-6 py-8 shadow-[0_18px_40px_rgba(0,0,0,0.08)] sm:px-8">
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.4em] text-black/50">
+              Mistika / Carrito
+            </p>
+            <h1 className="mt-2 inline-flex items-center gap-3 text-3xl font-semibold tracking-[0.1em] sm:text-4xl">
+              <ShoppingBag size={26} aria-hidden="true" />
+              Carrito
+            </h1>
+            <p className="mt-2 text-sm text-black/60">
+              {totalQuantity} artículos
+            </p>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={clearCart}
-            type="button"
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-50"
-          >
-            Vaciar
-          </button>
-          <Link href="/shop" className="rounded-xl bg-black px-4 py-2 text-sm text-white">
-            Seguir comprando
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={clearCart}
+              type="button"
+              className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-black/60 transition hover:bg-black/5"
+            >
+              Vaciar
+            </button>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:translate-y-[-1px]"
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              Seguir comprando
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
       {cart.length === 0 ? (
-        <div className="mt-10 rounded-2xl border p-6 text-neutral-600">
-          Tu carrito está vacío.
-        </div>
+        <section className="mt-8 grid place-items-center rounded-[28px] border border-dashed border-black/10 bg-white p-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-black/10 bg-black/5">
+            <ShoppingBag size={28} aria-hidden="true" />
+          </div>
+          <h2 className="mt-4 text-xl font-semibold">Tu carrito está vacío</h2>
+          <p className="mt-2 max-w-md text-sm text-black/60">
+            Descubre nuestras velas artesanales y llena tu espacio de calma.
+          </p>
+          <Link
+            href="/shop"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white"
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Explorar catálogo
+          </Link>
+        </section>
       ) : (
-        <div className="mt-8 space-y-4">
-          {cart.map((it) => (
-            <div key={it.name} className="rounded-2xl border p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium">{it.name}</p>
-                  <p className="mt-1 text-sm text-neutral-600">
-                    ${it.priceNumber.toFixed(2)} MXN
-                  </p>
-                </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <section className="space-y-4">
+            {cart.map((it, index) => {
+              const quantity = Math.max(1, Number(it.quantity) || 1);
+              const itemTotal = (Number(it.priceNumber) || 0) * quantity;
 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={1}
-                    value={it.quantity}
-                    onChange={(e) => updateQuantity(it.name, Number(e.target.value))}
-                    className="w-20 rounded-xl border px-3 py-2 text-sm"
-                  />
-                  <button
-                    onClick={() => removeFromCart(it.name)}
-                    type="button"
-                    className="rounded-xl border px-3 py-2 text-sm hover:bg-neutral-50"
-                  >
-                    Quitar
-                  </button>
-                </div>
+              return (
+                <article
+                  key={it.name}
+                  className="relative overflow-hidden rounded-[24px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] card-reveal sm:p-5"
+                  style={{
+                    animationDelay: `${index * 60}ms`,
+                  }}
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-4 sm:flex-[1.2]">
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-black/10 bg-black/5">
+                        <div
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${it.imageUrl ?? "/images/products/placeholder.jpg"})`,
+                          }}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold leading-snug line-clamp-2">
+                          {it.name}
+                        </p>
+                        <p className="mt-1 text-sm text-black/60">
+                          ${Number(it.priceNumber || 0).toFixed(2)} MXN
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black/5 px-2 py-1.5">
+                        <button
+                          type="button"
+                          aria-label={`Disminuir cantidad de ${it.name}`}
+                          onClick={() =>
+                            updateQuantity(it.name, Math.max(1, quantity - 1))
+                          }
+                          className="grid h-8 w-8 place-items-center rounded-full border border-black/10 bg-white text-black transition hover:scale-[1.03]"
+                        >
+                          <Minus size={14} aria-hidden="true" />
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          value={quantity}
+                          onChange={(e) =>
+                            updateQuantity(
+                              it.name,
+                              Number(e.target.value) || 1,
+                            )
+                          }
+                          className="w-12 bg-transparent text-center text-sm font-semibold text-black"
+                        />
+                        <button
+                          type="button"
+                          aria-label={`Aumentar cantidad de ${it.name}`}
+                          onClick={() => updateQuantity(it.name, quantity + 1)}
+                          className="grid h-8 w-8 place-items-center rounded-full border border-black/10 bg-white text-black transition hover:scale-[1.03]"
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+
+                      <div className="min-w-[120px] text-right">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-black/50">
+                          Total
+                        </p>
+                        <p className="text-lg font-semibold">
+                          ${itemTotal.toFixed(2)} MXN
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => removeFromCart(it.name)}
+                        type="button"
+                        className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-black/60 transition hover:bg-black/5"
+                        aria-label={`Quitar ${it.name} del carrito`}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+
+          <aside className="h-fit rounded-[24px] border border-black/10 bg-white p-6 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-black/50">
+              Resumen
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Tu pedido</h2>
+
+            <div className="mt-6 space-y-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-black/60">Artículos</span>
+                <span className="font-semibold">{totalQuantity}</span>
               </div>
-            </div>
-          ))}
-
-          <div className="rounded-2xl border p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-neutral-600">Total</p>
-              <p className="text-xl font-semibold">${totalPrice.toFixed(2)} MXN</p>
+              <div className="flex items-center justify-between">
+                <span className="text-black/60">Subtotal</span>
+                <span className="font-semibold">${totalPrice.toFixed(2)} MXN</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-black/60">Envío</span>
+                <span className="font-semibold">Calculado al pagar</span>
+              </div>
             </div>
 
             <button
               type="button"
-              className="mt-4 w-full rounded-2xl bg-black px-5 py-3 text-white hover:opacity-90"
+              className="mt-6 w-full rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:translate-y-[-1px]"
             >
               Ir a pagar
             </button>
-          </div>
+          </aside>
         </div>
       )}
     </main>
