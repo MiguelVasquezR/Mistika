@@ -1,0 +1,10 @@
+/**
+ * Global type declarations
+ * This file ensures all type declarations are loaded
+ * Types are available globally without import
+ */
+
+// Re-export all type declarations
+/// <reference path="./product.d.ts" />
+/// <reference path="./cart.d.ts" />
+/// <reference path="./common.d.ts" />

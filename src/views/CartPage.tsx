@@ -4,19 +4,19 @@ import Link from "next/link";
 
 export function CartPage() {
   // TODO: Implement cart functionality with RTK Query
-  const cart: any[] = [];
+  const cart: CartItem[] = [];
   const removeFromCart = () => {};
-  const updateQty = () => {};
+  const updateQuantity = () => {};
   const clearCart = () => {};
   const totalPrice = 0;
-  const totalQty = 0;
+  const totalQuantity = 0;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">Carrito</h1>
-          <p className="mt-2 text-neutral-600">{totalQty} artículos</p>
+          <p className="mt-2 text-neutral-600">{totalQuantity} artículos</p>
         </div>
 
         <div className="flex gap-2">
@@ -53,8 +53,8 @@ export function CartPage() {
                   <input
                     type="number"
                     min={1}
-                    value={it.qty}
-                    onChange={(e) => updateQty(it.name, Number(e.target.value))}
+                    value={it.quantity}
+                    onChange={(e) => updateQuantity(it.name, Number(e.target.value))}
                     className="w-20 rounded-xl border px-3 py-2 text-sm"
                   />
                   <button

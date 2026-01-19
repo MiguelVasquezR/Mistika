@@ -3,7 +3,7 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import { Provider } from "react-redux";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { makeStore, type AppStore } from "@/lib/store";
+import { makeStore, type AppStore } from "@/store/store";
 
 type Props = {
   children: ReactNode;

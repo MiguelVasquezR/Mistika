@@ -2,12 +2,7 @@
 
 import { useToast } from "@/hooks/useToast";
 
-type Props = {
-  id: number;
-  name: string;
-  price: string | number;
-  image?: string | null;
-};
+type Props = ProductCardProps;
 
 export function AddToCartIconButton({ id, name, price, image }: Props) {
   const { showToast } = useToast();

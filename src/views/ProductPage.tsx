@@ -3,9 +3,7 @@ import { prisma } from "@/config/prisma";
 import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 
-type ProductPageProps = { id: number };
-
-export async function ProductPage({ id }: ProductPageProps) {
+export async function ProductPage({ id }: { id: number }) {
   const producto = await prisma.productos.findUnique({
     where: { id },
   });

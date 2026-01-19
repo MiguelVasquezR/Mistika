@@ -36,12 +36,7 @@ export const productsApi = apiSlice.injectEndpoints({
 
     // Create product (mutation)
     createProduct: build.mutation({
-      query: (formData: {
-        nombre: string;
-        precio: number;
-        descripcion?: string;
-        imagen?: string;
-      }) => ({
+      query: (formData: ProductInput) => ({
         url: "",
         method: "POST",
         body: { product: formData },
@@ -55,16 +50,7 @@ export const productsApi = apiSlice.injectEndpoints({
 
     // Update product (mutation)
     updateProduct: build.mutation({
-      query: ({
-        id,
-        ...formData
-      }: {
-        id: number;
-        nombre?: string;
-        precio?: number;
-        descripcion?: string;
-        imagen?: string;
-      }) => ({
+      query: ({ id, ...formData }: { id: number } & Partial<ProductInput>) => ({
         url: "",
         method: "PUT",
         body: { product: formData },
@@ -91,39 +77,6 @@ export const productsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Products"],
     }),
-
-    // Infinite query example for pagination
-    fetchProductsInfinite: build.query({
-      query: (page: number = 1) => ({
-        url: "",
-        method: "GET",
-        headers: {
-          endpoint: `products?page=${page}&limit=10`,
-          method: "GET",
-        },
-      }),
-      transformResponse: (response: any) => ({
-        data: response.data?.products || response.products || [],
-        nextPage: response.nextPage || null,
-        hasMore: response.hasMore || false,
-      }),
-      // Only have one cache entry per query
-      serializeQueryArgs: ({ endpointName }) => {
-        return endpointName;
-      },
-      // Always merge incoming data to the cache entry
-      merge: (currentCache, newItems) => {
-        return {
-          ...newItems,
-          data: [...(currentCache?.data || []), ...(newItems.data || [])],
-        };
-      },
-      // Refetch when the page arg changes
-      forceRefetch({ currentArg, previousArg }) {
-        return currentArg !== previousArg;
-      },
-      providesTags: ["Products"],
-    }),
   }),
 });
 
@@ -134,5 +87,4 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
-  useFetchProductsInfiniteQuery,
 } = productsApi;
