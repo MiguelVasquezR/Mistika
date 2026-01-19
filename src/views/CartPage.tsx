@@ -40,7 +40,7 @@ export function CartPage() {
               Vaciar
             </button>
             <Link
-              href="/shop"
+              href="/"
               className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:translate-y-[-1px]"
             >
               <ArrowLeft size={14} aria-hidden="true" />
@@ -60,7 +60,7 @@ export function CartPage() {
             Descubre nuestras velas artesanales y llena tu espacio de calma.
           </p>
           <Link
-            href="/shop"
+            href="/"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white"
           >
             <ArrowLeft size={14} aria-hidden="true" />

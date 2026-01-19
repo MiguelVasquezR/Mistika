@@ -61,7 +61,7 @@ export function ProductPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <Link
-        href="/shop"
+        href="/"
         className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:underline"
       >
         <ArrowLeft size={16} aria-hidden="true" />

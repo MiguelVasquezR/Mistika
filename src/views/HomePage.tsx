@@ -18,7 +18,7 @@ export function HomePage() {
         </h1>
 
         <Link
-          href="/shop"
+          href="/"
           aria-label="Ir a compras"
           className="relative inline-flex items-center justify-center px-10 sm:px-16 py-3 sm:py-4 text-sm sm:text-base uppercase tracking-[0.25em] rounded-full transition-transform hover:scale-105"
         >

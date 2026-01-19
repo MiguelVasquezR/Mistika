@@ -22,7 +22,7 @@ export default function ProductCarousel() {
 
   return (
     <section className="relative w-screen overflow-hidden">
-      <div className="relative h-[45vh] min-h-[360px] w-full">
+      <div className="relative h-[80vh] min-h-[600px] w-full">
         {slides.map((slide, i) => (
           <div
             key={slide.src}
@@ -41,29 +41,20 @@ export default function ProductCarousel() {
           </div>
         ))}
 
-        <div className="absolute inset-0 flex items-end">
-          <div className="px-6 pb-8 sm:px-10">
-            <p className="text-xs uppercase tracking-[0.35em] text-white/80">
-              MISTIKA
-            </p>
-            <p className="mt-2 text-2xl font-light text-white">
-              Velas, aromas y calma
-            </p>
-
-            <div className="mt-4 flex gap-2">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  aria-label={`Ir a la diapositiva ${i + 1}`}
-                  aria-current={i === index}
-                  onClick={() => setIndex(i)}
-                  className={`h-2 w-2 rounded-full ${
-                    i === index ? "bg-white" : "bg-white/40"
-                  }`}
-                />
-              ))}
-            </div>
+        <div className="absolute inset-0 flex items-end justify-center pb-6">
+          <div className="flex gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Ir a la diapositiva ${i + 1}`}
+                aria-current={i === index}
+                onClick={() => setIndex(i)}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  i === index ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
