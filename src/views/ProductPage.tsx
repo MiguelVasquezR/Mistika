@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Package, Plus, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
-import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { useFetchProductQuery } from "@/store/features/products/productsApi";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -39,6 +38,10 @@ export function ProductPage() {
   const { data: productData, isLoading: isLoadingProduct, isError: isErrorProduct, error: errorProduct } = useFetchProductQuery(id, { skip: !id });
   const product = productData?.data;
   const errorMessage = getApiErrorMessage(errorProduct);
+  const categoryName =
+    typeof product?.category === "string"
+      ? product.category
+      : product?.category?.name ?? "—";
   
   const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
   
@@ -190,7 +193,7 @@ export function ProductPage() {
             <div className="mb-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-black/70 backdrop-blur-sm">
                 <Sparkles size={12} aria-hidden="true" />
-                {product.category}
+                {categoryName}
               </span>
             </div>
 
@@ -327,7 +330,7 @@ export function ProductPage() {
                   Categoría
                 </span>
                 <span className="font-medium text-black/70">
-                  {product.category}
+                  {categoryName}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">

@@ -4,10 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const slides = [
-  { src: "/images/carousel/Home.jpg", alt: "Mistika" },
-  { src: "/images/carousel/Vela.jpg", alt: "Velas artesanales" },
-  { src: "/images/carousel/Materiales.jpg", alt: "Materiales naturales" },
-  { src: "/images/carousel/Palos.jpg", alt: "Rituales y aromas" },
+  "https://res.cloudinary.com/di3ldc36w/image/upload/v1768882074/Screenshot_2026-01-19_at_3.55.53_p.m._w6jtpm.png",
+  "https://res.cloudinary.com/di3ldc36w/image/upload/v1768882074/Screenshot_2026-01-19_at_3.55.53_p.m._w6jtpm.png"
 ];
 
 export default function ProductCarousel() {
@@ -25,14 +23,14 @@ export default function ProductCarousel() {
       <div className="relative h-screen sm:h-[80vh] sm:min-h-[600px] w-full">
         {slides.map((slide, i) => (
           <div
-            key={slide.src}
+            key={slide + i}
             className={`absolute inset-0 transition-opacity duration-700 ${
               i === index ? "opacity-100" : "opacity-0"
             }`}
           >
             <Image
-              src={slide.src}
-              alt={slide.alt}
+              src={slide}
+              alt={slide}
               fill
               priority={i === 0}
               className="object-cover"
