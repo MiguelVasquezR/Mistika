@@ -94,8 +94,9 @@ export function DashboardView() {
     router.replace("/login");
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-MX", {
+  const formatDate = (date: string | Date) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    return d.toLocaleDateString("es-MX", {
       day: "numeric",
       month: "short",
       hour: "2-digit",
