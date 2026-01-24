@@ -6,9 +6,9 @@ import { motion, useInView } from "framer-motion";
 import { ArrowDown, ChevronDown, ChevronLeft, ChevronRight, ShoppingBag, SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductCarousel from "@/components/shop/ProductCarousel";
+import { ServerError } from "@/components/ui/ServerError";
 import { useFetchProductsQuery, ProductsQueryParams } from "@/store/features/products/productsApi";
 import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
-import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import { useCart } from "@/context/cart-context";
 
 const heroVariants = {
@@ -59,8 +59,8 @@ export function LandingPageView() {
     data: productsData,
     isLoading,
     isError,
-    error,
     isFetching,
+    refetch,
   } = useFetchProductsQuery(
     { page: currentPage, limit: pageSize, sortBy, categoryId } as ProductsQueryParams,
     {
@@ -71,7 +71,6 @@ export function LandingPageView() {
 
   const products = productsData?.data ?? [];
   const pagination = productsData?.pagination;
-  const errorMessage = getApiErrorMessage(error);
   const productsSectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridInView = useInView(gridRef, {
@@ -239,9 +238,12 @@ export function LandingPageView() {
         {isLoading || isFetching ? (
           <p className="text-sm text-black/60">Cargando productos...</p>
         ) : isError ? (
-          <p className="text-sm text-black/60">
-            {errorMessage ?? "No se pudieron cargar los productos."}
-          </p>
+          <ServerError
+            title="Error de conexión"
+            message="No pudimos cargar los productos. Por favor, verifica tu conexión o intenta más tarde."
+            onRetry={refetch}
+            showHomeButton={false}
+          />
         ) : products.length === 0 ? (
           <p className="text-sm text-black/60">No hay productos disponibles.</p>
         ) : (

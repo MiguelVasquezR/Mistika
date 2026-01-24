@@ -22,7 +22,7 @@ import {
   useFetchCategoriesQuery,
   useDeleteCategoryMutation,
 } from "@/store/features/categories/categoriesApi";
-import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import { ServerError } from "@/components/ui/ServerError";
 import toast from "react-hot-toast";
 
 export function CategoriesAdminView() {
@@ -36,14 +36,12 @@ export function CategoriesAdminView() {
     data: categoriesData,
     isLoading,
     isError,
-    error,
     refetch,
   } = useFetchCategoriesQuery(undefined, { skip: false });
 
   const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
 
   const categories = categoriesData?.data ?? [];
-  const errorMessage = getApiErrorMessage(error);
 
   const filteredCategories = categories.filter(
     (category: Category) =>
@@ -192,11 +190,12 @@ export function CategoriesAdminView() {
             </div>
           </div>
         ) : isError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-            <p className="text-red-600">
-              {errorMessage ?? "Error al cargar las categorías"}
-            </p>
-          </div>
+          <ServerError
+            title="Error de conexión"
+            message="No pudimos cargar las categorías. Por favor, verifica tu conexión o intenta más tarde."
+            onRetry={refetch}
+            showHomeButton={false}
+          />
         ) : filteredCategories.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}

@@ -21,6 +21,7 @@ import {
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
 import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
 import { clearStoredToken } from "@/lib/auth/client";
+import { ServerError } from "@/components/ui/ServerError";
 import toast from "react-hot-toast";
 
 const containerVariants = {
@@ -53,14 +54,20 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
 
 export function DashboardView() {
   const router = useRouter();
-  const { data: productsData, isLoading: isLoadingProducts } = useFetchProductsQuery(
+  const { data: productsData, isLoading: isLoadingProducts, isError: isErrorProducts, refetch: refetchProducts } = useFetchProductsQuery(
     { page: 1, limit: 100 },
     { skip: false }
   );
-  const { data: ordersData, isLoading: isLoadingOrders } = useFetchOrdersQuery(
+  const { data: ordersData, isLoading: isLoadingOrders, isError: isErrorOrders, refetch: refetchOrders } = useFetchOrdersQuery(
     { page: 1, limit: 100 },
     { skip: false }
   );
+
+  const isError = isErrorProducts || isErrorOrders;
+  const refetch = () => {
+    refetchProducts();
+    refetchOrders();
+  };
 
   const products = productsData?.data ?? [];
   const orders = ordersData?.data ?? [];
@@ -100,6 +107,19 @@ export function DashboardView() {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
     return `$${num.toFixed(2)}`;
   };
+
+  if (isError) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
+        <ServerError
+          title="Error de conexión"
+          message="No pudimos conectar con el servidor. Por favor, verifica tu conexión o intenta más tarde."
+          onRetry={refetch}
+          showHomeButton={false}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">

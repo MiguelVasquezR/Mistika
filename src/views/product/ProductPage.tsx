@@ -8,8 +8,8 @@ import { useFetchProductQuery } from "@/store/features/products/productsApi";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import { useCart } from "@/context/cart-context";
+import { ServerError } from "@/components/ui/ServerError";
 
 
 
@@ -38,9 +38,8 @@ export function ProductPage() {
   const idParam = params?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam ?? "";
 
-  const { data: productData, isLoading: isLoadingProduct, isError: isErrorProduct, error: errorProduct } = useFetchProductQuery(id, { skip: !id });
+  const { data: productData, isLoading: isLoadingProduct, isError: isErrorProduct, refetch } = useFetchProductQuery(id, { skip: !id });
   const product = productData?.data;
-  const errorMessage = getApiErrorMessage(errorProduct);
   const categoryName =
     typeof product?.category === "string"
       ? product.category
@@ -62,10 +61,10 @@ export function ProductPage() {
   const isInCart = currentQuantity > 0;
 
   useEffect(() => {
-    if (isErrorProduct && errorMessage) {
-      toast.error(errorMessage);
+    if (isErrorProduct) {
+      toast.error("Error al cargar el producto");
     }
-  }, [isErrorProduct, errorMessage]);
+  }, [isErrorProduct]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!product) return;
@@ -115,12 +114,12 @@ export function ProductPage() {
 
   if (isErrorProduct) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="text-center py-20">
-          <p className="text-neutral-600">
-            {errorMessage ?? "No se pudo cargar el producto."}
-          </p>
-        </div>
+      <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
+        <ServerError
+          title="Error de conexión"
+          message="No pudimos cargar el producto. Por favor, verifica tu conexión o intenta más tarde."
+          onRetry={refetch}
+        />
       </main>
     );
   }

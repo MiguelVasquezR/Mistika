@@ -24,7 +24,7 @@ import {
   useFetchProductsQuery,
   useDeleteProductMutation,
 } from "@/store/features/products/productsApi";
-import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import { ServerError } from "@/components/ui/ServerError";
 import toast from "react-hot-toast";
 
 export function ProductsAdminView() {
@@ -36,14 +36,13 @@ export function ProductsAdminView() {
   } | null>(null);
   const limit = 12;
 
-  const { data: productsData, isLoading, isError, error } = useFetchProductsQuery(
+  const { data: productsData, isLoading, isError, refetch } = useFetchProductsQuery(
     { page, limit },
     { skip: false }
   );
 
   const products = productsData?.data ?? [];
   const pagination = productsData?.pagination;
-  const errorMessage = getApiErrorMessage(error);
 
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
@@ -211,11 +210,12 @@ export function ProductsAdminView() {
             <p className="text-black/60">Cargando productos...</p>
           </div>
         ) : isError ? (
-          <div className="rounded-2xl border border-black/10 bg-white p-16 text-center">
-            <p className="text-black/60">
-              {errorMessage ?? "No se pudieron cargar los productos."}
-            </p>
-          </div>
+          <ServerError
+            title="Error de conexión"
+            message="No pudimos cargar los productos. Por favor, verifica tu conexión o intenta más tarde."
+            onRetry={refetch}
+            showHomeButton={false}
+          />
         ) : filteredProducts.length === 0 ? (
           <div className="rounded-2xl border border-black/10 bg-white p-16 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-black/5">

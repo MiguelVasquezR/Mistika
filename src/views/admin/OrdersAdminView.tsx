@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useFetchOrdersQuery } from "@/store/features/orders/ordersApi";
-import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
+import { ServerError } from "@/components/ui/ServerError";
 import Link from "next/link";
 
 const statusConfig: Record<
@@ -71,7 +71,7 @@ export function OrdersAdminView() {
     data: ordersData,
     isLoading,
     isError,
-    error,
+    refetch,
   } = useFetchOrdersQuery(
     {
       page,
@@ -83,7 +83,6 @@ export function OrdersAdminView() {
 
   const orders = ordersData?.data ?? [];
   const pagination = ordersData?.pagination;
-  const errorMessage = getApiErrorMessage(error);
 
   const filteredOrders = orders.filter((order: Order) => {
     if (!searchQuery) return true;
@@ -214,11 +213,12 @@ export function OrdersAdminView() {
             </div>
           </div>
         ) : isError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-            <p className="text-red-600">
-              {errorMessage ?? "Error al cargar los pedidos"}
-            </p>
-          </div>
+          <ServerError
+            title="Error de conexión"
+            message="No pudimos cargar los pedidos. Por favor, verifica tu conexión o intenta más tarde."
+            onRetry={refetch}
+            showHomeButton={false}
+          />
         ) : filteredOrders.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
