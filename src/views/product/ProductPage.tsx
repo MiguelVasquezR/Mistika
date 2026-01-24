@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Package, Plus, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
 import { useFetchProductQuery } from "@/store/features/products/productsApi";
@@ -44,9 +45,9 @@ export function ProductPage() {
     typeof product?.category === "string"
       ? product.category
       : product?.category?.name ?? "—";
-  
+
   const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
-  
+
   // Find if product is in cart
   const cartItem = useMemo(() => {
     if (!product) return null;
@@ -68,7 +69,7 @@ export function ProductPage() {
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!product) return;
-    
+
     if (newQuantity <= 0) {
       removeFromCart(product.name);
       toast.success(`${product.name} eliminado del carrito`);
@@ -137,11 +138,7 @@ export function ProductPage() {
   const stock = Number(product.stock ?? 0);
   const isInactive = !product.isActive;
   const isAvailable = !isInactive && stock > 0;
-  const stockLabel = isInactive
-    ? "No disponible"
-    : stock > 0
-      ? `${stock} ${stock === 1 ? "disponible" : "disponibles"}`
-      : "Agotado";
+
   const stockColor = isInactive
     ? "text-black/30"
     : isAvailable
@@ -174,17 +171,14 @@ export function ProductPage() {
             variants={itemVariants}
             className="relative overflow-hidden rounded-[32px] border border-black/10 bg-black/5 shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
           >
-            <div className="pointer-events-none absolute -left-20 top-10 h-40 w-40 rounded-full bg-black/5 blur-3xl" />
-            <div className="pointer-events-none absolute -right-20 bottom-10 h-40 w-40 rounded-full bg-black/5 blur-3xl" />
-            
-            <div className="relative aspect-square">
-              <div
-                className={`h-full w-full bg-cover bg-center transition-transform duration-700 hover:scale-[1.02] ${
-                  !isAvailable ? "grayscale opacity-60" : ""
-                }`}
-                style={{
-                  backgroundImage: `url(${product.imageUrl ?? "/images/products/placeholder.jpg"})`,
-                }}
+            <div className="relative aspect-square overflow-hidden">
+              <Image
+                src={product.imageUrl ?? "/images/products/placeholder.jpg"}
+                alt={product.name}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className={`scale-105 object-cover ${!isAvailable ? "grayscale opacity-60" : ""
+                  }`}
               />
             </div>
           </motion.div>
@@ -233,14 +227,6 @@ export function ProductPage() {
                   </span>
                 </div>
               )}
-            </div>
-
-            {/* Stock status */}
-            <div className="mb-8 flex items-center gap-3">
-              <Package size={18} className={stockColor} aria-hidden="true" />
-              <span className={`text-sm font-medium ${stockColor}`}>
-                {stockLabel}
-              </span>
             </div>
 
             {/* Description */}
@@ -294,7 +280,7 @@ export function ProductPage() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-3">
                     <Link
                       href="/cart"

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { ArrowDown, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
-import ProductCard from "./ProductCard";
+import ProductCard from "@/components/shop/ProductCard";
 import ProductCarousel from "@/components/shop/ProductCarousel";
 import { useFetchProductsQuery } from "@/store/features/products/productsApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
@@ -35,7 +35,7 @@ const cardVariants = {
   },
 };
 
-export default function LandingPage() {
+export function LandingPageView() {
   const { totalQuantity } = useCart();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
