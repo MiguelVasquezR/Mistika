@@ -3,10 +3,11 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { ArrowDown, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
+import { ArrowDown, ChevronDown, ChevronLeft, ChevronRight, ShoppingBag, SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductCarousel from "@/components/shop/ProductCarousel";
-import { useFetchProductsQuery } from "@/store/features/products/productsApi";
+import { useFetchProductsQuery, ProductsQueryParams } from "@/store/features/products/productsApi";
+import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
 import { getApiErrorMessage } from "@/store/features/api/getApiErrorMessage";
 import { useCart } from "@/context/cart-context";
 
@@ -35,10 +36,24 @@ const cardVariants = {
   },
 };
 
+type SortOption = "newest" | "price_asc" | "price_desc";
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "newest", label: "Más recientes" },
+  { value: "price_desc", label: "Mayor precio" },
+  { value: "price_asc", label: "Menor precio" },
+];
+
 export function LandingPageView() {
   const { totalQuantity } = useCart();
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [categoryId, setCategoryId] = useState<string>("all");
   const pageSize = 20;
+
+  // Fetch categories for filter
+  const { data: categoriesData } = useFetchCategoriesQuery(true);
+  const categories = categoriesData?.data ?? [];
 
   const {
     data: productsData,
@@ -47,7 +62,7 @@ export function LandingPageView() {
     error,
     isFetching,
   } = useFetchProductsQuery(
-    { page: currentPage, limit: pageSize },
+    { page: currentPage, limit: pageSize, sortBy, categoryId } as ProductsQueryParams,
     {
       skip: false,
       refetchOnMountOrArgChange: true,
@@ -64,7 +79,6 @@ export function LandingPageView() {
     margin: "0px 0px -120px 0px",
   });
 
-
   const scrollToProducts = () => {
     productsSectionRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -75,6 +89,16 @@ export function LandingPageView() {
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     scrollToProducts();
+  };
+
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
+    setCurrentPage(1); // Reset to page 1 when filter changes
+  };
+
+  const handleCategoryChange = (newCategoryId: string) => {
+    setCategoryId(newCategoryId);
+    setCurrentPage(1); // Reset to page 1 when filter changes
   };
 
   return (
@@ -147,18 +171,69 @@ export function LandingPageView() {
         ref={productsSectionRef}
         className="mx-auto max-w-6xl px-6 pb-20 pt-4 sm:px-10"
       >
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-black/50">
-              Coleccion
+        <div className="mb-8 flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-black/50">
+                Colección
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[0.08em]">
+                Productos seleccionados
+              </h2>
+            </div>
+            <p className="text-sm text-black/60">
+              Entrega rápida y compra directa sin fricciones.
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[0.08em]">
-              Productos seleccionados
-            </h2>
           </div>
-          <p className="text-sm text-black/60">
-            Entrega rapida y compra directa sin fricciones.
-          </p>
+
+          {/* Filters */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-black/10 bg-black/5 p-4">
+            <div className="flex items-center gap-2 text-sm text-black/60">
+              <SlidersHorizontal size={16} />
+              <span className="font-medium">Filtros</span>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {/* Category Filter */}
+              <div className="relative">
+                <select
+                  value={categoryId}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-black/10 bg-white px-4 py-2.5 pr-10 text-sm font-medium text-black transition hover:border-black/20 focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 sm:w-auto"
+                >
+                  <option value="all">Todas las categorías</option>
+                  {categories.map((cat: Category) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/40"
+                />
+              </div>
+
+              {/* Sort Filter */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value as SortOption)}
+                  className="w-full appearance-none rounded-xl border border-black/10 bg-white px-4 py-2.5 pr-10 text-sm font-medium text-black transition hover:border-black/20 focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 sm:w-auto"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/40"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {isLoading || isFetching ? (

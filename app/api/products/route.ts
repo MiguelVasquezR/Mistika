@@ -4,8 +4,12 @@ import { requireAdminAuth } from "@/lib/auth/api-helper";
 
 /**
  * GET /api/products
- * Fetch products with pagination
- * Query params: page (default: 1), limit (default: 12)
+ * Fetch products with pagination, sorting and filtering
+ * Query params:
+ *   - page (default: 1)
+ *   - limit (default: 12)
+ *   - sortBy: "price_asc" | "price_desc" | "newest" (default)
+ *   - categoryId: filter by category ID
  * Public route - no authentication required
  */
 export async function GET(request: NextRequest) {
@@ -13,28 +17,49 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "12", 10);
-    
+    const sortBy = searchParams.get("sortBy") || "newest";
+    const categoryId = searchParams.get("categoryId");
+
     // Validate pagination parameters
     const currentPage = Math.max(1, page);
     const pageSize = Math.min(Math.max(1, limit), 100); // Max 100 items per page
     const skip = (currentPage - 1) * pageSize;
 
-    // Get total count for pagination metadata (only active products)
-    const total = await prisma.products.count({
-      where: {
-        isActive: true,
-      },
-    });
-    
-    // Fetch paginated products with category (only active products)
+    // Build where clause
+    const where: any = {
+      isActive: true,
+    };
+
+    // Filter by category if provided
+    if (categoryId && categoryId !== "all") {
+      where.categoryId = parseInt(categoryId, 10);
+    }
+
+    // Build orderBy clause based on sortBy parameter
+    let orderBy: any = { id: "desc" }; // Default: newest first
+    switch (sortBy) {
+      case "price_asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { price: "desc" };
+        break;
+      case "newest":
+      default:
+        orderBy = { id: "desc" };
+        break;
+    }
+
+    // Get total count for pagination metadata
+    const total = await prisma.products.count({ where });
+
+    // Fetch paginated products with category
     const products = await prisma.products.findMany({
-      where: {
-        isActive: true,
-      },
+      where,
       include: {
         category: true,
       },
-      orderBy: { id: "desc" },
+      orderBy,
       skip,
       take: pageSize,
     });
