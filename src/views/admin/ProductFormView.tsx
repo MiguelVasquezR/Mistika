@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useFetchProductQuery, useCreateProductMutation, useUpdateProductMutation } from "@/store/features/products/productsApi";
 import { useFetchCategoriesQuery } from "@/store/features/categories/categoriesApi";
 import toast from "react-hot-toast";
+import { CloudinaryUploadWidget } from "@/components/widget/Cloudinary";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -175,7 +176,7 @@ export function ProductFormView() {
                     </div>
                     <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Información básica</h2>
                   </div>
-                  
+
                   <div className="space-y-4 sm:space-y-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
@@ -268,7 +269,7 @@ export function ProductFormView() {
                     </div>
                     <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Precios y ofertas</h2>
                   </div>
-                  
+
                   <div className="space-y-4 sm:space-y-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
@@ -334,7 +335,7 @@ export function ProductFormView() {
                     </div>
                     <h2 className="text-lg font-semibold tracking-[0.05em] sm:text-xl">Inventario</h2>
                   </div>
-                  
+
                   <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
                     <div>
                       <label className="mb-2 block text-sm font-semibold text-black/80">
@@ -375,7 +376,7 @@ export function ProductFormView() {
               {/* Sidebar */}
               <motion.div variants={itemVariants} className="lg:col-span-1">
                 <div className="lg:sticky lg:top-8 space-y-6">
-                  {/* Image Preview */}
+                  {/* Image Upload */}
                   <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-[0_16px_36px_rgba(0,0,0,0.08)]">
                     <div className="mb-4 flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-black/5">
@@ -383,53 +384,35 @@ export function ProductFormView() {
                       </div>
                       <h3 className="font-semibold tracking-[0.05em]">Imagen</h3>
                     </div>
-                    
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-black/80">
-                        URL de la imagen
-                      </label>
-                      <input
-                        type="url"
-                        name="imageUrl"
-                        value={formData.imageUrl}
-                        onChange={handleChange}
-                        placeholder="https://..."
-                        className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-                      />
-                      {formData.imageUrl && (
-                        <div className="mt-4 overflow-hidden rounded-xl border border-black/10 bg-black/5">
-                          <img
-                            src={formData.imageUrl}
-                            alt="Preview"
-                            className="aspect-square w-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
+
+                    <CloudinaryUploadWidget
+                      currentImageUrl={formData.imageUrl}
+                      onUploadSuccess={(url) => {
+                        setFormData((prev) => ({ ...prev, imageUrl: url }));
+                      }}
+                      folder="products"
+                    />
                   </div>
 
                   {/* Submit */}
                   <div className="rounded-[32px] border border-black/10 bg-white p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08)] sm:p-6">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4 sm:text-base"
-                  >
-                    <Save size={18} aria-hidden="true" />
-                    <span className="hidden sm:inline">
-                      {isSubmitting
-                        ? "Guardando..."
-                        : isEditing
-                          ? "Actualizar producto"
-                          : "Crear producto"}
-                    </span>
-                    <span className="sm:hidden">
-                      {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
-                    </span>
-                  </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-4 sm:text-base"
+                    >
+                      <Save size={18} aria-hidden="true" />
+                      <span className="hidden sm:inline">
+                        {isSubmitting
+                          ? "Guardando..."
+                          : isEditing
+                            ? "Actualizar producto"
+                            : "Crear producto"}
+                      </span>
+                      <span className="sm:hidden">
+                        {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
+                      </span>
+                    </button>
                     <Link
                       href="/admin/products"
                       className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black/5 sm:px-6 sm:py-4 sm:text-base"

@@ -22,6 +22,7 @@ export function middleware(request: NextRequest) {
     "/api/auth/login", // Login es público
     "/api/auth/verify", // Verificación de token es público (necesario para AdminGuard)
     "/api/mail", // Mail puede ser público o tener su propia validación
+    "/api/cloudinary/sign", // Firma de uploads Cloudinary (el widget no envía headers de auth)
   ];
 
   // Verificar si es una ruta pública exacta
