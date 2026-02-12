@@ -6,13 +6,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBM92MU7M112g-Nqn3sUSoc2Q_RdWAbZ4o",
-  authDomain: "velas-689e4.firebaseapp.com",
-  projectId: "velas-689e4",
-  storageBucket: "velas-689e4.firebasestorage.app",
-  messagingSenderId: "4149750392",
-  appId: "1:4149750392:web:149b1a613642be4ac41b8d",
-  databaseURL: "https://velas-689e4-default-rtdb.firebaseio.com"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 // Initialize Firebase
