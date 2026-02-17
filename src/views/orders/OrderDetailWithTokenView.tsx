@@ -54,7 +54,7 @@ export function OrderDetailWithTokenView() {
   useEffect(() => {
     const t = getTokenFromUrl();
     const n = getOrderNumberFromUrl();
-    if (t) setTokenFromWindow(t);
+    if (t) { setTokenFromWindow(t) }
     if (n) setOrderNumberFromWindow(n);
     setHasCheckedWindow(true);
   }, []);
