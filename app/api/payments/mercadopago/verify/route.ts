@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMercadoPagoPayment } from "@/lib/mercadopago/get-payment";
 import { checkoutOrdersRepo } from "@/firebase/repos";
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { processPaymentResult } from "@/lib/mercadopago/process-payment-result";
+import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
 
 /**
  * GET /api/payments/mercadopago/verify
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const result = await processPaymentResult(mpPayment as Parameters<typeof processPaymentResult>[0], {
+    const result = await processPaymentResult(mpPayment as unknown as MpPaymentLike, {
       auditLogPrefix: "[MP Verify]",
     });
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getMercadoPagoPayment } from "@/lib/mercadopago/get-payment";
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { processPaymentResult } from "@/lib/mercadopago/process-payment-result";
+import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
 
 const WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 const WEBHOOK_LOG_PREFIX = "[MP Webhook]";
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      const result = await processPaymentResult(mpPayment as Parameters<typeof processPaymentResult>[0], {
+      const result = await processPaymentResult(mpPayment as unknown as MpPaymentLike, {
         auditLogPrefix: WEBHOOK_LOG_PREFIX,
       });
 
