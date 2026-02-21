@@ -56,8 +56,7 @@ export function CartPage() {
   };
 
   const shippingCost = 150;
-  const tax = totalPrice * 0.16;
-  const finalTotal = totalPrice + shippingCost + tax;
+  const finalTotal = totalPrice + shippingCost;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-white to-black/5">
@@ -278,10 +277,7 @@ export function CartPage() {
                       <span className="text-black/60">Envío</span>
                       <span className="font-medium">${shippingCost.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-black/60">IVA (16%)</span>
-                      <span className="font-medium">${tax.toFixed(2)}</span>
-                    </div>
+                    <p className="text-xs text-black/50">Nuestros productos ya incluyen el IVA.</p>
                   </div>
 
                   <div className="mt-4 border-t border-black/10 pt-4">

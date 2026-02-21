@@ -332,7 +332,6 @@ export function OrderDetailWithTokenView() {
                 <p className="text-black/80">
                   {order.shippingCity}, {order.shippingState} {order.shippingZip}
                 </p>
-                <p className="text-black/80">{order.shippingCountry}</p>
               </div>
             </div>
           </div>
@@ -353,10 +352,9 @@ export function OrderDetailWithTokenView() {
                   <span className="text-black/60">Envío</span>
                   <span className="font-semibold">{formatPrice(order.shippingCost)}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-black/60">IVA (16%)</span>
-                  <span className="font-semibold">{formatPrice(order.tax)}</span>
-                </div>
+                <p className="text-xs text-black/50">
+                  Nuestros productos ya incluyen el IVA.
+                </p>
                 <div className="border-t border-black/10 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold uppercase tracking-[0.1em]">Total</span>

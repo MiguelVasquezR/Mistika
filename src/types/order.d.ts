@@ -115,7 +115,7 @@ declare global {
   type OrderInput = {
     customerName: string;
     customerEmail: string;
-    customerPhone?: string;
+    customerPhone: string;
     shippingAddress: Address;
     billingAddress?: Address;
     shippingMethod?: ShippingMethod;

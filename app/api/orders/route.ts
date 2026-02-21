@@ -93,6 +93,14 @@ export const POST = withApiRoute({ route: "/api/orders" }, async (request: NextR
       );
     }
 
+    const customerPhone = typeof body.customerPhone === "string" ? body.customerPhone.trim() : "";
+    if (!customerPhone) {
+      return NextResponse.json(
+        { success: false, error: "El teléfono del cliente es obligatorio" },
+        { status: 400 }
+      );
+    }
+
     const normalizedItems = rawItems.map((item) => {
       const productId = String(item.productId);
       const quantity = Math.max(1, Number(item.quantity) || 1);
@@ -185,8 +193,8 @@ export const POST = withApiRoute({ route: "/api/orders" }, async (request: NextR
       overnight: 500.0,
     };
     const shippingCost = shippingCosts[body.shippingMethod || "standard"] ?? 150.0;
-    const tax = subtotal * 0.16;
-    const totalAmount = subtotal + shippingCost + tax;
+    const tax = 0;
+    const totalAmount = subtotal + shippingCost;
 
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
@@ -221,7 +229,7 @@ export const POST = withApiRoute({ route: "/api/orders" }, async (request: NextR
       tax,
       customerName: body.customerName,
       customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone ?? null,
+      customerPhone,
       shippingStreet: body.shippingAddress.street,
       shippingCity: body.shippingAddress.city,
       shippingState: body.shippingAddress.state,
@@ -267,7 +275,6 @@ export const POST = withApiRoute({ route: "/api/orders" }, async (request: NextR
       const shippingAddress = [
         createdOrder.shippingStreet,
         `${createdOrder.shippingCity}, ${createdOrder.shippingState} ${createdOrder.shippingZip}`,
-        createdOrder.shippingCountry,
       ]
         .filter(Boolean)
         .join("\n");

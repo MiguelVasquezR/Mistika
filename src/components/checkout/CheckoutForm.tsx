@@ -55,7 +55,6 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
     shippingCity: "",
     shippingState: "",
     shippingZip: "",
-    shippingCountry: "México",
     shippingMethod: "standard" as "standard" | "express",
     notes: "",
   });
@@ -71,8 +70,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
 
   const shippingCost =
     shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
-  const tax = totalPrice * 0.16;
-  const totalAmount = totalPrice + shippingCost + tax;
+  const totalAmount = totalPrice + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,13 +80,13 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
       const orderData: OrderInput = {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone || undefined,
+        customerPhone: formData.customerPhone,
         shippingAddress: {
           street: formData.shippingStreet,
           city: formData.shippingCity,
           state: formData.shippingState,
           zip: formData.shippingZip,
-          country: formData.shippingCountry,
+          country: "México",
         },
         shippingMethod: formData.shippingMethod,
         paymentMethod: "card",
@@ -212,7 +210,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               <label className="mb-1.5 block text-sm font-medium text-black/70">
                 <div className="flex items-center gap-1.5">
                   <Phone size={14} />
-                  Teléfono
+                  Teléfono *
                 </div>
               </label>
               <input
@@ -220,7 +218,8 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
                 name="customerPhone"
                 value={formData.customerPhone}
                 onChange={handleChange}
-                placeholder="(opcional)"
+                required
+                placeholder="Tu teléfono"
                 className="w-full rounded-lg border border-black/10 px-4 py-2.5 text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
               />
             </div>
@@ -279,34 +278,19 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-black/70">
-                Código postal *
-              </label>
-              <input
-                type="text"
-                name="shippingZip"
-                value={formData.shippingZip}
-                onChange={handleChange}
-                required
-                placeholder="00000"
-                className="w-full rounded-lg border border-black/10 px-4 py-2.5 text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-black/70">
-                País *
-              </label>
-              <input
-                type="text"
-                name="shippingCountry"
-                value={formData.shippingCountry}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-black/10 px-4 py-2.5 text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
-              />
-            </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-black/70">
+              Código postal *
+            </label>
+            <input
+              type="text"
+              name="shippingZip"
+              value={formData.shippingZip}
+              onChange={handleChange}
+              required
+              placeholder="00000"
+              className="w-full rounded-lg border border-black/10 px-4 py-2.5 text-sm transition focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/10"
+            />
           </div>
         </div>
       </div>
@@ -379,10 +363,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
               <span className="text-black/60">Envío</span>
               <span className="font-medium">${shippingCost.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-black/60">IVA (16%)</span>
-              <span className="font-medium">${tax.toFixed(2)}</span>
-            </div>
+            <p className="text-xs align-center text-black/50">Nuestros productos ya incluyen el IVA.</p>
             <div className="border-t border-black/10 pt-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold">Total a pagar</span>

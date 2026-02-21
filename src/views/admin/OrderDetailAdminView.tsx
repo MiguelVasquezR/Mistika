@@ -348,7 +348,6 @@ export function OrderDetailAdminView() {
                   <p className="text-sm text-black/70">
                     {order.shippingCity}, {order.shippingState} {order.shippingZip}
                   </p>
-                  <p className="text-sm text-black/70">{order.shippingCountry}</p>
                   <div className="mt-3 rounded-lg bg-black/5 px-3 py-2 text-sm">
                     <span className="font-medium">
                       {order.shippingMethod === "standard"
@@ -469,10 +468,9 @@ export function OrderDetailAdminView() {
                       {formatPrice(order.shippingCost)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-black/60">IVA (16%)</span>
-                    <span className="font-medium">{formatPrice(order.tax)}</span>
-                  </div>
+                  <p className="text-xs text-black/50">
+                    Nuestros productos ya incluyen el IVA.
+                  </p>
                   <div className="border-t border-black/10 pt-3">
                     <div className="flex justify-between">
                       <span className="font-semibold">Total</span>

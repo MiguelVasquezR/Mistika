@@ -89,7 +89,6 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
     }));
 
     const shippingCost = Number(draft.shippingCost) || 0;
-    const tax = Number(draft.tax) || 0;
 
     const items = [...productItems];
     if (shippingCost > 0) {
@@ -98,15 +97,6 @@ export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference"
         title: "Envío",
         quantity: 1,
         unit_price: shippingCost,
-        currency_id: "MXN" as const,
-      });
-    }
-    if (tax > 0) {
-      items.push({
-        id: "iva",
-        title: "IVA (16%)",
-        quantity: 1,
-        unit_price: tax,
         currency_id: "MXN" as const,
       });
     }

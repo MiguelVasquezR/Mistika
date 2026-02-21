@@ -24,6 +24,14 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
       );
     }
 
+    const customerPhone = typeof body.customerPhone === "string" ? body.customerPhone.trim() : "";
+    if (!customerPhone) {
+      return NextResponse.json(
+        { success: false, error: "El teléfono del cliente es obligatorio" },
+        { status: 400 }
+      );
+    }
+
     const normalizedItems = rawItems.map((item) => {
       const productId = String(item.productId);
       const quantity = Math.max(1, Number(item.quantity) || 1);
@@ -96,8 +104,8 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     const subtotal = normalizedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const shippingCosts: Record<string, number> = { standard: 150, express: 250, overnight: 500 };
     const shippingCost = shippingCosts[body.shippingMethod || "standard"] ?? 150;
-    const tax = subtotal * 0.16;
-    const totalAmount = subtotal + shippingCost + tax;
+    const tax = 0;
+    const totalAmount = subtotal + shippingCost;
 
     const orderItemsForCreate = normalizedItems.map((item) => {
       const product = productMap.get(item.productId);
@@ -118,7 +126,7 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
       tax,
       customerName: body.customerName,
       customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone ?? null,
+      customerPhone,
       shippingStreet: body.shippingAddress.street,
       shippingCity: body.shippingAddress.city,
       shippingState: body.shippingAddress.state,
