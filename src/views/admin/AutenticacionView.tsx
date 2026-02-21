@@ -218,7 +218,7 @@ export default function AutenticacionView() {
                   </div>
 
                   {/* Forgot Password */}
-                  <div className="pt-2 text-center">
+               {/*    <div className="pt-2 text-center">
                     <button
                       type="button"
                       className="text-xs text-black/50 underline decoration-black/15 underline-offset-4 transition hover:text-black/70"
@@ -226,7 +226,7 @@ export default function AutenticacionView() {
                     >
                       ¿Olvidaste tu contraseña?
                     </button>
-                  </div>
+                  </div> */}
                 </form>
               </div>
             </div>

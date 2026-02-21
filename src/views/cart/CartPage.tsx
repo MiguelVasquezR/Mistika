@@ -13,7 +13,6 @@ import {
   X,
   CreditCard,
   Package,
-  Truck,
   Shield,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -56,7 +55,7 @@ export function CartPage() {
     setShowClearModal(false);
   };
 
-  const shippingCost = totalPrice >= 500 ? 0 : 150;
+  const shippingCost = 150;
   const tax = totalPrice * 0.16;
   const finalTotal = totalPrice + shippingCost + tax;
 
@@ -224,9 +223,8 @@ export function CartPage() {
               </div>
 
               {/* Benefits */}
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {[
-                  { icon: Truck, text: "Envío gratis en compras +$500" },
                   { icon: Shield, text: "Pago 100% seguro" },
                   { icon: Package, text: "Empaque ecológico" },
                 ].map((benefit, i) => (
@@ -278,11 +276,7 @@ export function CartPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-black/60">Envío</span>
-                      {shippingCost === 0 ? (
-                        <span className="font-medium text-green-600">Gratis</span>
-                      ) : (
-                        <span className="font-medium">${shippingCost.toFixed(2)}</span>
-                      )}
+                      <span className="font-medium">${shippingCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-black/60">IVA (16%)</span>

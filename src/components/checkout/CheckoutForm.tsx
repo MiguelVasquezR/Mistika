@@ -70,9 +70,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
   };
 
   const shippingCost =
-    totalPrice >= 500
-      ? 0
-      : shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
+    shippingOptions.find((o) => o.value === formData.shippingMethod)?.cost || 150;
   const tax = totalPrice * 0.16;
   const totalAmount = totalPrice + shippingCost + tax;
 
@@ -318,11 +316,6 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
         <div className="flex items-center gap-3 border-b border-black/10 bg-black/5 px-4 py-3">
           <Truck size={16} className="text-black/60" />
           <span className="text-sm font-semibold">Método de envío</span>
-          {totalPrice >= 500 && (
-            <span className="ml-auto rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              ¡Envío gratis!
-            </span>
-          )}
         </div>
         <div className="p-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -349,13 +342,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
                     <p className="text-xs text-black/50">{option.days}</p>
                   </div>
                 </div>
-                <span className="text-sm font-semibold">
-                  {totalPrice >= 500 ? (
-                    <span className="text-green-600">Gratis</span>
-                  ) : (
-                    `$${option.cost}`
-                  )}
-                </span>
+                <span className="text-sm font-semibold">${option.cost}</span>
               </label>
             ))}
           </div>
@@ -390,11 +377,7 @@ export function CheckoutForm({ totalPrice, onClose }: Props) {
             </div>
             <div className="flex justify-between">
               <span className="text-black/60">Envío</span>
-              {shippingCost === 0 ? (
-                <span className="font-medium text-green-600">Gratis</span>
-              ) : (
-                <span className="font-medium">${shippingCost.toFixed(2)}</span>
-              )}
+              <span className="font-medium">${shippingCost.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-black/60">IVA (16%)</span>
