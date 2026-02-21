@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   orderDraftsRepo,
   productsRepo,
-} from "@/firebase/repos";
+} from "../../_utils/repos";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 /**
  * POST /api/checkout/draft
@@ -10,7 +12,7 @@ import {
  * Crea un borrador de orden (sin decrementar stock ni crear orden).
  * La orden se crea cuando el webhook de MP confirma el pago.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (request: NextRequest) => {
   try {
     const body = (await request.json()) as OrderInput;
 
@@ -140,10 +142,10 @@ export async function POST(request: NextRequest) {
       data: { id: createdDraft._id },
     });
   } catch (error) {
-    console.error("[Checkout Draft] Error:", error);
+    logger.error("checkout.draft_create_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo crear el borrador" },
       { status: 500 }
     );
   }
-}
+});

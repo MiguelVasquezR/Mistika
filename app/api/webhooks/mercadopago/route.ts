@@ -3,15 +3,17 @@ import { verifyMercadoPagoWebhookSignature } from "@/lib/webhooks/verifySignatur
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
 import { MercadoPagoService } from "@/services/MercadoPagoService";
 import { BillingService } from "@/services/BillingService";
-import { webhookEventsRepo, paymentsRepo } from "@/firebase/repos";
+import { webhookEventsRepo, paymentsRepo } from "../../_utils/repos";
 import { mapMpPaymentToPaymentDocument } from "@/lib/mercadopago/map-mp-payment-to-doc";
 import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
+import { withDependency } from "../../_utils/dependencies";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 /** Clave secreta de Webhooks (Tus integraciones > Webhooks). Verifica autenticidad con x-signature. */
 const WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 const MAX_BODY_SIZE = 512 * 1024; // 512 KB
 const RAW_PAYLOAD_MAX_LEN = 16 * 1024; // 16 KB for audit
-const LOG_PREFIX = "[MP Webhook]";
 
 type WebhookPayload = {
   id?: string | number;
@@ -52,35 +54,32 @@ function getTopicAndAction(payload: WebhookPayload): { topic: string; action: st
   return { topic, action, resourceId };
 }
 
-export async function POST(request: NextRequest) {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  console.log(`${LOG_PREFIX} [${requestId}] POST received`);
+export const POST = withApiRoute({ route: "/api/webhooks/mercadopago" }, async (request: NextRequest) => {
+  logger.info("mp.webhook.received");
 
   try {
     if (!isMercadoPagoConfigured()) {
-      console.log(`${LOG_PREFIX} [${requestId}] MP not configured, skipping`);
+      logger.warn("mp.webhook.not_configured");
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
     const contentType = request.headers.get("content-type") ?? "";
     const rawBody = await request.text();
-    console.log(`${LOG_PREFIX} [${requestId}] body length=${rawBody.length} contentType=${contentType}`);
+    logger.info("mp.webhook.body_received", { bodySize: rawBody.length, contentType });
 
     if (rawBody.length > MAX_BODY_SIZE) {
-      console.warn(`${LOG_PREFIX} [${requestId}] Payload too large (${rawBody.length})`);
+      logger.warn("mp.webhook.payload_too_large", { bodySize: rawBody.length });
       return NextResponse.json({ error: "Payload too large" }, { status: 413 });
     }
 
     const payload = parsePayload(rawBody, contentType);
     const { topic, action, resourceId } = getTopicAndAction(payload);
-    // data.id para la firma: puede venir en query (doc MP) o en el body
     const dataIdFromQuery = request.nextUrl.searchParams.get("data.id");
     const dataIdForSignature = (dataIdFromQuery ?? resourceId).toString().trim();
     const dataIdNormalized = dataIdForSignature ? dataIdForSignature.toLowerCase() : "";
-    console.log(`${LOG_PREFIX} [${requestId}] parsed topic=${topic} action=${action} resourceId=${resourceId} dataIdForSignature=${dataIdNormalized || "(empty)"}`);
 
-    // Verificación de firma (x-signature + MERCADOPAGO_WEBHOOK_SECRET). Doc: developers.mercadopago > Webhooks > Validar origen.
-    // Si hay secret y la firma falta o es inválida, guardamos el evento pero no procesamos (no ejecutamos lógica de negocio).
+    logger.info("mp.webhook.parsed", { topic, action, resourceId, hasDataId: Boolean(dataIdNormalized) });
+
     let signatureValid = true;
     if (WEBHOOK_SECRET && dataIdNormalized) {
       const xSignature = request.headers.get("x-signature");
@@ -93,15 +92,15 @@ export async function POST(request: NextRequest) {
         });
       if (!valid) {
         signatureValid = false;
-        console.log(`${LOG_PREFIX} [${requestId}] signature check: hasSignature=${hasSignature} valid=false -> will save event but skip processing`);
+        logger.warn("mp.webhook.signature_invalid", { hasSignature });
       }
     } else {
-      if (!WEBHOOK_SECRET) console.log(`${LOG_PREFIX} [${requestId}] MERCADOPAGO_WEBHOOK_SECRET not set, skipping signature check`);
-      else console.log(`${LOG_PREFIX} [${requestId}] no data.id for signature, skipping verification`);
+      logger.info("mp.webhook.signature_skipped", {
+        reason: !WEBHOOK_SECRET ? "missing_secret" : "missing_data_id",
+      });
     }
 
     const eventId = payload?.id != null ? String(payload.id) : `${topic}_${resourceId}_${action}_${Date.now()}`;
-    console.log(`${LOG_PREFIX} [${requestId}] eventId=${eventId}`);
     const actionCreatedAtBucket = payload?.date_created
       ? new Date(payload.date_created).toISOString().slice(0, 16)
       : new Date().toISOString().slice(0, 16);
@@ -116,11 +115,11 @@ export async function POST(request: NextRequest) {
     );
     const duplicate = existingByEventId.find((e) => e.provider === "mercadopago");
     if (duplicate) {
-      console.log(`${LOG_PREFIX} [${requestId}] duplicate eventId=${eventId}, skipping`);
+      logger.info("mp.webhook.duplicate_event", { eventId });
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    console.log(`${LOG_PREFIX} [${requestId}] creating webhook event in DB...`);
+    logger.info("mp.webhook.persisting_event", { eventId, topic, action });
     const created = await webhookEventsRepo.create({
       provider: "mercadopago",
       eventId,
@@ -133,22 +132,25 @@ export async function POST(request: NextRequest) {
       rawPayloadTruncated: rawTruncated,
     } as import("@/firebase/repos").WebhookEventEntity);
     const webhookEvent = created as import("@/firebase/repos").WebhookEventEntity & { _id: string };
-    console.log(`${LOG_PREFIX} [${requestId}] webhook event saved id=${webhookEvent._id}`);
+    logger.info("mp.webhook.event_saved", { eventId, webhookEventId: webhookEvent._id });
 
     if (!signatureValid) {
       await webhookEventsRepo.update(webhookEvent._id!, {
         lastError: "Firma ausente o inválida (solo auditoría, no procesado)",
       });
-      console.log(`${LOG_PREFIX} [${requestId}] event saved without processing (signature missing/invalid)`);
+      logger.warn("mp.webhook.saved_unverified", { eventId });
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
     try {
       if (topic === "payment" || topic === "payments") {
-        console.log(`${LOG_PREFIX} [${requestId}] processing payment resourceId=${resourceId}`);
-        const mpPayment = await MercadoPagoService.getPaymentById(resourceId);
+        logger.info("mp.webhook.process_payment", { resourceId });
+        const mpPayment = await withDependency(
+          { name: "mercadopago", operation: "payment.get" },
+          () => MercadoPagoService.getPaymentById(resourceId)
+        );
         if (!mpPayment) {
-          console.warn(`${LOG_PREFIX} [${requestId}] payment not found in MP resourceId=${resourceId}`);
+          logger.warn("mp.webhook.payment_not_found", { resourceId });
           await webhookEventsRepo.update(webhookEvent._id!, {
             status: "failed",
             lastError: "Payment not found in MP",
@@ -173,10 +175,16 @@ export async function POST(request: NextRequest) {
           payment = createdPayment as import("@/firebase/repos").PaymentEntity & { _id: string };
         }
         await BillingService.routeByPaymentStatus(payment);
-        await processPaymentResult(mpPayment as unknown as MpPaymentLike, { auditLogPrefix: LOG_PREFIX });
+        await withDependency(
+          { name: "app", operation: "processPaymentResult" },
+          () => processPaymentResult(mpPayment as unknown as MpPaymentLike, { auditLogPrefix: "[MP Webhook]" })
+        );
       } else if (topic === "topic_chargebacks_wh") {
-        console.log(`${LOG_PREFIX} [${requestId}] processing chargeback resourceId=${resourceId}`);
-        const chargeback = await MercadoPagoService.getChargebackById(resourceId);
+        logger.info("mp.webhook.process_chargeback", { resourceId });
+        const chargeback = await withDependency(
+          { name: "mercadopago", operation: "chargeback.get" },
+          () => MercadoPagoService.getChargebackById(resourceId)
+        );
         if (chargeback?.payments && Array.isArray(chargeback.payments)) {
           for (const paymentId of chargeback.payments as number[]) {
             const pid = String(paymentId);
@@ -202,32 +210,35 @@ export async function POST(request: NextRequest) {
           }
         }
       } else if (topic === "topic_claims_integration_wh") {
-        console.log(`${LOG_PREFIX} [${requestId}] processing claim resourceId=${resourceId}`);
-        await MercadoPagoService.getClaimById(resourceId);
+        logger.info("mp.webhook.process_claim", { resourceId });
+        await withDependency(
+          { name: "mercadopago", operation: "claim.get" },
+          () => MercadoPagoService.getClaimById(resourceId)
+        );
       } else {
-        console.log(`${LOG_PREFIX} [${requestId}] topic=${topic} no handler, marking processed`);
+        logger.info("mp.webhook.no_handler", { topic, action });
       }
 
       await webhookEventsRepo.update(webhookEvent._id!, { status: "processed", processedAt: Date.now() });
-      console.log(`${LOG_PREFIX} [${requestId}] done, status=processed`);
+      logger.info("mp.webhook.processed", { eventId });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`${LOG_PREFIX} [${requestId}] process error:`, err);
+      logger.error("mp.webhook.process_failed", { error: err, eventId, topic });
       await webhookEventsRepo.update(webhookEvent._id!, {
         status: "failed",
         lastError: message.slice(0, 500),
         retryCount: 1,
       });
-      console.log(`${LOG_PREFIX} [${requestId}] event updated to failed`);
+      logger.warn("mp.webhook.marked_failed", { eventId });
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
-    console.error(`${LOG_PREFIX} [${requestId}] top-level error (no event saved):`, error);
+    logger.error("mp.webhook.unhandled_error", { error });
     return NextResponse.json({ received: true }, { status: 200 });
   }
-}
+});
 
-export async function GET() {
+export const GET = withApiRoute({ route: "/api/webhooks/mercadopago" }, async () => {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-}
+});

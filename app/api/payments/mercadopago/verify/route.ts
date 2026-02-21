@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMercadoPagoPayment } from "@/lib/mercadopago/get-payment";
-import { checkoutOrdersRepo } from "@/firebase/repos";
+import { checkoutOrdersRepo } from "../../../_utils/repos";
 import { isMercadoPagoConfigured } from "@/lib/mercadopago/client";
 import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/process-payment-result";
+import { withDependency } from "../../../_utils/dependencies";
+import { logger } from "../../../_utils/logger";
+import { withApiRoute } from "../../../_utils/with-api-route";
 
 /**
  * GET /api/payments/mercadopago/verify
@@ -11,7 +14,7 @@ import { processPaymentResult, type MpPaymentLike } from "@/lib/mercadopago/proc
  * Consulta el estado REAL del pago en Mercado Pago (Payments API), actualiza la orden en BD
  * y devuelve un payload claro para el frontend.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/payments/mercadopago/verify" }, async (request: NextRequest) => {
   if (!isMercadoPagoConfigured()) {
     return NextResponse.json(
       { success: false, error: "Mercado Pago no está configurado", orderId: null, status: "FAILED", canRetry: true, nextAction: "config_error" },
@@ -44,9 +47,12 @@ export async function GET(request: NextRequest) {
 
     if (effectivePaymentId) {
       try {
-        mpPayment = await getMercadoPagoPayment(effectivePaymentId);
+        mpPayment = await withDependency(
+          { name: "mercadopago", operation: "payment.get" },
+          () => getMercadoPagoPayment(effectivePaymentId)
+        );
       } catch (err) {
-        console.error("[MP Verify] Error fetching payment:", err);
+        logger.error("mp.verify_fetch_failed", { error: err });
         return NextResponse.json({
           success: false,
           error: "No se pudo verificar el pago con Mercado Pago",
@@ -100,9 +106,12 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const result = await processPaymentResult(mpPayment as unknown as MpPaymentLike, {
-      auditLogPrefix: "[MP Verify]",
-    });
+    const result = await withDependency(
+      { name: "app", operation: "processPaymentResult" },
+      () => processPaymentResult(mpPayment as unknown as MpPaymentLike, {
+        auditLogPrefix: "[MP Verify]",
+      })
+    );
 
     const status = result.status;
     const orderId = result.orderId ?? result.checkoutOrder?.convertedOrderId ?? null;
@@ -132,7 +141,7 @@ export async function GET(request: NextRequest) {
       nextAction,
     });
   } catch (error) {
-    console.error("[MP Verify] Error:", error);
+    logger.error("mp.verify_failed", { error });
     return NextResponse.json({
       success: false,
       error: "Error al verificar el pago",
@@ -143,4 +152,4 @@ export async function GET(request: NextRequest) {
       nextAction: "retry_checkout",
     }, { status: 500 });
   }
-}
+});

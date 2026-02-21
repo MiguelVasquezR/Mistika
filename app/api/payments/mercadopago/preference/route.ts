@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPreferenceClient, isMercadoPagoConfigured } from "@/lib/mercadopago/client";
-import { orderDraftsRepo, checkoutOrdersRepo } from "@/firebase/repos";
+import { orderDraftsRepo, checkoutOrdersRepo } from "../../../_utils/repos";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { withDependency } from "../../../_utils/dependencies";
+import { logger } from "../../../_utils/logger";
+import { withApiRoute } from "../../../_utils/with-api-route";
 
 /**
  * POST /api/payments/mercadopago/preference
@@ -13,7 +16,7 @@ import { getAppBaseUrl } from "@/lib/app-url";
  * back_urls apuntan a /checkout/return (MP añade payment_id, preference_id, status).
  * La orden final (orders) se crea cuando el webhook o verify confirman approved.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ route: "/api/payments/mercadopago/preference" }, async (request: NextRequest) => {
   if (!isMercadoPagoConfigured()) {
     return NextResponse.json(
       { success: false, error: "Mercado Pago no está configurado (MERCADOPAGO_ACCESS_TOKEN)" },
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
     const baseUrl = getAppBaseUrl();
     const isAbsoluteUrl = baseUrl.startsWith("http://") || baseUrl.startsWith("https://");
     if (!baseUrl || !isAbsoluteUrl) {
-      console.error("[MP Preference] APP URL inválida (debe ser absoluta):", baseUrl);
+      logger.error("mp.preference_invalid_base_url", { baseUrl });
       return NextResponse.json(
         {
           success: false,
@@ -132,14 +135,17 @@ export async function POST(request: NextRequest) {
     };
 
     const client = getPreferenceClient();
-    const result = await client.create({ body: preferenceBody });
+    const result = await withDependency(
+      { name: "mercadopago", operation: "preference.create" },
+      () => client.create({ body: preferenceBody })
+    );
 
     const preferenceId = result?.id ?? null;
     const initPoint = result?.init_point ?? null;
     const sandboxInitPoint = result?.sandbox_init_point ?? null;
 
     if (!preferenceId || !initPoint) {
-      console.error("[MP Preference] Invalid response:", result);
+      logger.error("mp.preference_invalid_response", { hasPreferenceId: !!preferenceId, hasInitPoint: !!initPoint });
       await checkoutOrdersRepo.update(checkoutOrderId, { status: "FAILED" });
       return NextResponse.json(
         { success: false, error: "Error al crear la preferencia en Mercado Pago" },
@@ -154,9 +160,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!sandboxInitPoint) {
-      console.warn(
-        "[MP Preference] sandbox_init_point no viene en la respuesta. Si usas tarjetas de prueba, asegúrate de usar Credenciales de prueba en MERCADOPAGO_ACCESS_TOKEN."
-      );
+      logger.warn("mp.preference_missing_sandbox_init_point");
     }
 
     return NextResponse.json({
@@ -169,11 +173,11 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[MP Preference] Error:", error);
+    logger.error("mp.preference_failed", { error });
     const message = error instanceof Error ? error.message : "Error desconocido";
     return NextResponse.json(
       { success: false, error: `Error al crear preferencia: ${message}` },
       { status: 500 }
     );
   }
-}
+});

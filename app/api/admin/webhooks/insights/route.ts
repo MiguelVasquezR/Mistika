@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
-import { webhookEventsRepo } from "@/firebase/repos";
+import { webhookEventsRepo } from "../../../_utils/repos";
 import type { WebhookEventDTO, WebhookInsightsResponse } from "@/types/webhook";
 import type { WebhookEventEntity } from "@/firebase/repos";
+import { logger } from "../../../_utils/logger";
+import { withApiRoute } from "../../../_utils/with-api-route";
 
 const querySchema = z.object({ range: z.enum(["24h", "7d"]).default("7d") });
 
@@ -29,7 +31,7 @@ function toDTO(e: WebhookEventEntity & { _id: string }): WebhookEventDTO {
   };
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/admin/webhooks/insights" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
   const range = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams)).success
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
     };
     return NextResponse.json(response);
   } catch (err) {
-    console.error("[admin/webhooks/insights] GET error:", err);
+    logger.error("admin.webhooks_insights_failed", { error: err });
     return NextResponse.json({ error: "Error fetching insights" }, { status: 500 });
   }
-}
+});

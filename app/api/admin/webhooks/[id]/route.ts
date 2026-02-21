@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
-import { webhookEventsRepo } from "@/firebase/repos";
+import { webhookEventsRepo } from "../../../_utils/repos";
 import { sanitizeWebhookPayload } from "@/lib/webhooks/sanitize-payload";
 import type { WebhookEventDTO, WebhookDetailResponse } from "@/types/webhook";
 import type { WebhookEventEntity } from "@/firebase/repos";
+import { logger } from "../../../_utils/logger";
+import { withApiRoute } from "../../../_utils/with-api-route";
 
 function toDTO(e: WebhookEventEntity & { _id: string }, sanitizeRaw: boolean): WebhookEventDTO {
   const createdAt = typeof e.createdAt === "number" ? e.createdAt : 0;
@@ -28,7 +30,9 @@ function toDTO(e: WebhookEventEntity & { _id: string }, sanitizeRaw: boolean): W
   };
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiRoute(
+  { route: "/api/admin/webhooks/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
   const { id } = await params;
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const item = toDTO(doc as WebhookEventEntity & { _id: string }, true);
     return NextResponse.json({ item } satisfies WebhookDetailResponse);
   } catch (err) {
-    console.error("[admin/webhooks/:id] GET error:", err);
+    logger.error("admin.webhooks_get_failed", { error: err });
     return NextResponse.json({ error: "Error fetching webhook event" }, { status: 500 });
   }
-}
+});

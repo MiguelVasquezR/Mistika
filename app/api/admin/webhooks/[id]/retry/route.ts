@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
-import { webhookEventsRepo } from "@/firebase/repos";
+import { webhookEventsRepo } from "../../../../_utils/repos";
 import { processWebhookEventByTopic } from "@/services/processWebhookEvent";
+import { logger } from "../../../../_utils/logger";
+import { withApiRoute } from "../../../../_utils/with-api-route";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiRoute(
+  { route: "/api/admin/webhooks/[id]/retry" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
   const { id } = await params;
@@ -22,7 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (result.success) return NextResponse.json({ success: true, message: "Event reprocessed" });
     return NextResponse.json({ success: false, error: result.error }, { status: 422 });
   } catch (err) {
-    console.error("[admin/webhooks/:id/retry] POST error:", err);
+    logger.error("admin.webhooks_retry_failed", { error: err });
     return NextResponse.json({ error: "Error retrying webhook event" }, { status: 500 });
   }
-}
+});

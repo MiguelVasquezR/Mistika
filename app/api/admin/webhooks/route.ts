@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
-import { webhookEventsRepo } from "@/firebase/repos";
+import { webhookEventsRepo } from "../../_utils/repos";
 import type { WebhookEventDTO, WebhookListResponse } from "@/types/webhook";
 import type { WebhookEventEntity } from "@/firebase/repos";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -37,7 +39,7 @@ function toDTO(e: WebhookEventEntity & { _id: string }): WebhookEventDTO {
   };
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiRoute({ route: "/api/admin/webhooks" }, async (request: NextRequest) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
   const parseResult = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
     const response: WebhookListResponse = { items, total, page, limit, totalPages: Math.ceil(total / limit) };
     return NextResponse.json(response);
   } catch (err) {
-    console.error("[admin/webhooks] GET error:", err);
+    logger.error("admin.webhooks_list_failed", { error: err });
     return NextResponse.json({ error: "Error fetching webhook events" }, { status: 500 });
   }
-}
+});

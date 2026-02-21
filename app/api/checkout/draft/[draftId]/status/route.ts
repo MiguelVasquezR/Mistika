@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { orderDraftsRepo } from "@/firebase/repos";
+import { orderDraftsRepo } from "../../../../_utils/repos";
+import { logger } from "../../../../_utils/logger";
+import { withApiRoute } from "../../../../_utils/with-api-route";
 
 /**
  * GET /api/checkout/draft/[draftId]/status
@@ -7,10 +9,9 @@ import { orderDraftsRepo } from "@/firebase/repos";
  * Devuelve el estado del borrador. Si ya fue convertido en orden, incluye orderId y orderNumber.
  * Usado por la página de success para saber cuándo redirigir al detalle del pedido.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ draftId: string }> }
-) {
+export const GET = withApiRoute(
+  { route: "/api/checkout/draft/[draftId]/status" },
+  async (request: NextRequest, { params }: { params: Promise<{ draftId: string }> }) => {
   try {
     const { draftId } = await params;
     const draft = await orderDraftsRepo.getById(draftId);
@@ -35,7 +36,7 @@ export async function GET(
       data: { status: draft.status },
     });
   } catch (error) {
-    console.error("[Draft Status] Error:", error);
+    logger.error("checkout.draft_status_failed", { error });
     return NextResponse.json({ success: false, error: "Error al consultar estado" }, { status: 500 });
   }
-}
+});

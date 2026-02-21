@@ -5,10 +5,12 @@ import {
   productsRepo,
   categoriesRepo,
   toApiEntity,
-} from "@/firebase/repos";
+} from "../../_utils/repos";
 import { requireAdminAuth } from "@/lib/auth/api-helper";
 import { sendMail } from "@/mail/sendMail";
 import type { OrderStatusPayload } from "@/mail/types";
+import { logger } from "../../_utils/logger";
+import { withApiRoute } from "../../_utils/with-api-route";
 
 async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof ordersRepo.getById>>) {
   if (!order) return null;
@@ -42,10 +44,9 @@ async function enrichOrderWithItemsAndCategory(order: Awaited<ReturnType<typeof 
   };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiRoute(
+  { route: "/api/orders/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -63,18 +64,17 @@ export async function GET(
     const data = await enrichOrderWithItemsAndCategory(order);
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error fetching order:", error);
+    logger.error("orders.fetch_one_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo obtener el pedido" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withApiRoute(
+  { route: "/api/orders/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -124,18 +124,17 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error updating order:", error);
+    logger.error("orders.update_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo actualizar el pedido" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withApiRoute(
+  { route: "/api/orders/[id]" },
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAdminAuth(request);
   if (!auth.success) return auth.response;
 
@@ -161,10 +160,10 @@ export async function DELETE(
       message: "Pedido eliminado correctamente",
     });
   } catch (error) {
-    console.error("Error deleting order:", error);
+    logger.error("orders.delete_failed", { error });
     return NextResponse.json(
       { success: false, error: "No se pudo eliminar el pedido" },
       { status: 500 }
     );
   }
-}
+});
