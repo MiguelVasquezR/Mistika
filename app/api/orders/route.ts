@@ -228,8 +228,8 @@ export const POST = withApiRoute(
         0,
       );
       const shippingCosts: Record<string, number> = {
-        standard: 150.0,
-        express: 250.0,
+        standard: 80.0,
+        express: 120.0,
         overnight: 500.0,
       };
       const shippingCost =

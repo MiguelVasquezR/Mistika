@@ -29,13 +29,13 @@ const shippingOptions = [
     value: "standard",
     label: "Estándar",
     days: "5-7 días hábiles",
-    cost: 150,
+    cost: 80,
   },
   {
     value: "express",
     label: "Express",
     days: "2-3 días hábiles",
-    cost: 250,
+    cost: 120,
   },
 ] as const;
 
