@@ -102,7 +102,7 @@ export const POST = withApiRoute({ route: "/api/checkout/draft" }, async (reques
     }
 
     const subtotal = normalizedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-    const shippingCosts: Record<string, number> = { standard: 150, express: 250, overnight: 500 };
+    const shippingCosts: Record<string, number> = { standard: 80, express: 120, overnight: 500 };
     const shippingCost = shippingCosts[body.shippingMethod || "standard"] ?? 150;
     const tax = 0;
     const totalAmount = subtotal + shippingCost;
